@@ -14,6 +14,7 @@ import { StyleBar } from "./components/layout/StyleBar";
 import { useShortcuts } from "./hooks/useShortcuts";
 import { useAppLifecycle } from "./hooks/useAppLifecycle";
 import { toggleFullscreen } from "./actions/commands";
+import { cancelEdit } from "./actions/textEditActions";
 
 export default function App() {
   const hasDoc = useDoc((s) => !!s.doc);
@@ -26,6 +27,12 @@ export default function App() {
   useEffect(() => {
     if (!hasDoc && fullscreen) void toggleFullscreen(false);
   }, [hasDoc, fullscreen]);
+
+  // Leaving the Edit-text tool discards an open (unapplied) text editor.
+  const tool = useUi((s) => s.tool);
+  useEffect(() => {
+    if (tool !== "edit-text") cancelEdit();
+  }, [tool]);
 
   return (
     <div className={`app${fullscreen ? " fullscreen" : ""}`}>
