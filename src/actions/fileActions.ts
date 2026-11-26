@@ -1,11 +1,13 @@
 import { platform, type OpenedFile } from "../platform";
-import { PasswordRequiredError } from "../core/pdf/pdfjs";
+import { openPdf, PasswordRequiredError } from "../core/pdf/pdfjs";
+import { looksEncrypted } from "../core/mupdf/security";
 import { mergeDocuments } from "../core/pdf/pageOps";
 import { exportDocument } from "./exportDocument";
 import {
   closeDocument as closeDocState,
   exclusive,
   markSaved,
+  replaceBaseline,
   setDocument,
   useDoc,
   withBusy,
@@ -84,9 +86,19 @@ export async function openFile(file: OpenedFile, opts: { dirty?: boolean; id?: s
   let password: string | undefined;
   for (;;) {
     try {
-      await withBusy(`Opening ${file.name}…`, () =>
-        setDocument({ name: file.name, path: file.path, bytes: file.bytes, password, dirty: opts.dirty, id: opts.id }),
-      );
+      await withBusy(`Opening ${file.name}…`, async () => {
+        let bytes = file.bytes;
+        let protection: { userPassword: string } | undefined;
+        // Encrypted files are decrypted into an in-memory working copy so they
+        // can be edited; saving re-applies the password.
+        if (looksEncrypted(bytes)) {
+          await openPdf(bytes, password).then((p) => p.loadingTask.destroy());
+          const { decryptPdf } = await import("../core/mupdf/security");
+          bytes = await decryptPdf(bytes, password);
+          if (password) protection = { userPassword: password };
+        }
+        await setDocument({ name: file.name, path: file.path, bytes, protection, dirty: opts.dirty, id: opts.id });
+      });
       break;
     } catch (e) {
       if (e instanceof PasswordRequiredError) {
@@ -105,7 +117,30 @@ export async function openFile(file: OpenedFile, opts: { dirty?: boolean; id?: s
   }
   resetViewState();
   addRecent(file.path, file.name);
+  void importExistingAnnotations();
   return true;
+}
+
+/** Restores annotations previously saved by Marmara PDF as editable objects. */
+async function importExistingAnnotations(): Promise<void> {
+  const { doc, pdf } = useDoc.getState();
+  if (!doc || !pdf) return;
+  try {
+    let found = false;
+    for (let i = 1; i <= pdf.numPages && !found; i++) {
+      const anns = await (await pdf.getPage(i)).getAnnotations();
+      found = anns.some((a: { subtype?: string }) => a.subtype && !["Link", "Widget", "Popup"].includes(a.subtype));
+    }
+    if (!found) return;
+    const { importAnnotations } = await import("../core/annotations/bake");
+    const r = await importAnnotations(doc.bytes, doc.pageIds);
+    const now = useDoc.getState();
+    // Abort if the user already changed or replaced the document meanwhile.
+    if (!r || now.doc?.id !== doc.id || now.doc.bytes !== doc.bytes || now.undoStack.length) return;
+    await exclusive(() => replaceBaseline(r.bytes, r.annotations));
+  } catch (e) {
+    console.warn("Annotation import failed", e);
+  }
 }
 
 export async function openWithPicker(): Promise<void> {

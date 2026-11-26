@@ -33,7 +33,7 @@ export function useShortcuts() {
   useEffect(() => {
     const map = bindingMap();
     const onKey = (e: KeyboardEvent) => {
-      if (useDialogs.getState().dialogs.length) return; // modal dialogs own the keyboard
+      if (e.defaultPrevented || useDialogs.getState().dialogs.length) return; // handled locally / modal open
       const target = e.target as HTMLElement | null;
       const typing =
         !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));

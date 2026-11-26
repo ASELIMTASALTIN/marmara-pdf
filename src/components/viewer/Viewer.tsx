@@ -3,6 +3,7 @@ import { useDoc } from "../../state/documentStore";
 import { clampZoom, setZoom, useUi } from "../../state/uiStore";
 import { PageView } from "./PageView";
 import { viewer, zoomAnchor } from "./viewerController";
+import { useTextMarkup } from "../../hooks/useTextMarkup";
 
 const GAP = 16; // vertical gap between pages (px)
 const PAD = 24; // horizontal padding around pages (px)
@@ -56,6 +57,7 @@ export function Viewer() {
   const tool = useUi((s) => s.tool);
   const fullscreen = useUi((s) => s.fullscreen);
 
+  useTextMarkup();
   const ref = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ top: 0, left: 0, width: 800, height: 600 });
   const layout = useMemo(() => computeLayout(sizes, zoom), [sizes, zoom]);
@@ -194,6 +196,11 @@ export function Viewer() {
   // --- hand tool panning -------------------------------------------------------------
   const pan = useRef<{ x: number; y: number; top: number; left: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent) => {
+    // Clicking empty space clears the annotation selection.
+    const t = e.target as HTMLElement;
+    if (useUi.getState().selectedAnnotation && !t.closest("[data-ann-id], .sel-handle, .note-popup")) {
+      useUi.setState({ selectedAnnotation: null, editingAnnotation: null });
+    }
     const isMiddle = e.button === 1;
     if (!(tool === "hand" && e.button === 0) && !isMiddle) return;
     const el = ref.current!;

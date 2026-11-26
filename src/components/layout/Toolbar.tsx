@@ -27,7 +27,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useDoc } from "../../state/documentStore";
-import { setTool, setZoom, useUi, zoomStep, type Tool } from "../../state/uiStore";
+import { setZoom, useUi, zoomStep, type Tool } from "../../state/uiStore";
+import { activateTool } from "../../actions/toolActions";
 import { runCommand } from "../../actions/commands";
 import { viewer } from "../viewer/viewerController";
 import { IconButton } from "../common/IconButton";
@@ -135,7 +136,7 @@ function ZoomControls() {
 export function Toolbar() {
   const tool = useUi((s) => s.tool);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
-  const pick = (t: Tool) => setTool(tool === t && t !== "select" ? "select" : t);
+  const pick = (t: Tool) => void activateTool(t);
 
   return (
     <div className="toolbar" role="toolbar" aria-label="Tools">

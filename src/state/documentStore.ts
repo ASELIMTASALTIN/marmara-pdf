@@ -19,7 +19,8 @@ export interface DocumentData {
   bytes: Uint8Array;
   /** Stable id per page, parallel to the page order. */
   pageIds: string[];
-  password?: string;
+  /** Set when the original file was encrypted; saving re-applies the password. */
+  protection?: { userPassword: string };
   /** True once the user has confirmed overwriting the original file. */
   overwriteConfirmed?: boolean;
 }
@@ -79,8 +80,8 @@ export async function withBusy<T>(label: string, fn: () => Promise<T>): Promise<
 }
 
 // --- loading -----------------------------------------------------------------
-async function loadProxy(bytes: Uint8Array, password?: string) {
-  const pdf = await openPdf(bytes, password);
+async function loadProxy(bytes: Uint8Array) {
+  const pdf = await openPdf(bytes);
   const pageSizes = await readPageSizes(pdf);
   return { pdf, pageSizes };
 }
@@ -89,11 +90,11 @@ export async function setDocument(input: {
   name: string;
   path?: string;
   bytes: Uint8Array;
-  password?: string;
+  protection?: { userPassword: string };
   dirty?: boolean;
   id?: string;
 }): Promise<void> {
-  const { pdf, pageSizes } = await loadProxy(input.bytes, input.password);
+  const { pdf, pageSizes } = await loadProxy(input.bytes);
   const prev = useDoc.getState().pdf;
   useDoc.setState((s) => ({
     doc: {
@@ -102,7 +103,7 @@ export async function setDocument(input: {
       path: input.path,
       bytes: input.bytes,
       pageIds: pageSizes.map(() => newId()),
-      password: input.password,
+      protection: input.protection,
     },
     pdf,
     pageSizes,
@@ -134,7 +135,7 @@ async function applyState(next: { bytes: Uint8Array; pageIds: string[]; annotati
   const s = useDoc.getState();
   if (!s.doc) return;
   if (next.bytes !== s.doc.bytes) {
-    const { pdf, pageSizes } = await loadProxy(next.bytes, s.doc.password);
+    const { pdf, pageSizes } = await loadProxy(next.bytes);
     if (pageSizes.length !== next.pageIds.length) {
       void pdf.loadingTask.destroy();
       throw new Error(`Internal error: page count ${pageSizes.length} ≠ ${next.pageIds.length} page ids`);
@@ -211,6 +212,30 @@ export async function redo(): Promise<string | null> {
     dirty: true,
   }));
   return snap.label;
+}
+
+/**
+ * Replaces the document's baseline bytes and annotations without creating an
+ * undo step or marking the document dirty (used when importing editable
+ * annotations right after opening).
+ */
+export async function replaceBaseline(bytes: Uint8Array, annotations: AnnotationMap): Promise<void> {
+  const s = useDoc.getState();
+  if (!s.doc) return;
+  const { pdf, pageSizes } = await loadProxy(bytes);
+  if (pageSizes.length !== s.doc.pageIds.length) {
+    void pdf.loadingTask.destroy();
+    return;
+  }
+  const prev = s.pdf;
+  useDoc.setState((st) => ({
+    doc: st.doc && { ...st.doc, bytes },
+    pdf,
+    pageSizes,
+    revision: st.revision + 1,
+    annotations,
+  }));
+  setTimeout(() => void prev?.loadingTask.destroy(), 1500);
 }
 
 export function markSaved(patch: Partial<DocumentData>): void {

@@ -6,6 +6,8 @@ import { setTool, setZoom, useUi, zoomStep, type Tool } from "../state/uiStore";
 import { useSearch } from "../state/searchStore";
 import { openDialog, toast } from "../state/dialogStore";
 import { platform } from "../platform";
+import { activateTool } from "./toolActions";
+import { deleteSelectedAnnotation } from "./annotationActions";
 import { viewer } from "../components/viewer/viewerController";
 
 export interface Command {
@@ -49,8 +51,17 @@ export function openSearch() {
   });
 }
 
+/** Escape: leave editing / deselect / back to Select tool / leave full screen. */
+function escape() {
+  const ui = useUi.getState();
+  if (ui.editingAnnotation) useUi.setState({ editingAnnotation: null });
+  else if (ui.selectedAnnotation) useUi.setState({ selectedAnnotation: null });
+  else if (ui.tool !== "select") setTool("select");
+  else if (ui.fullscreen) void toggleFullscreen(false);
+}
+
 const page = (delta: number) => () => viewer.scrollToPage(useUi.getState().currentPage + delta);
-const tool = (t: Tool) => () => setTool(useUi.getState().tool === t ? "select" : t);
+const tool = (t: Tool) => () => activateTool(t);
 
 export const commands: Command[] = [
   { id: "file.open", label: "Open…", shortcut: "Ctrl+O", run: openWithPicker },
@@ -87,7 +98,7 @@ export const commands: Command[] = [
   { id: "view.fitWidth", label: "Fit width", shortcut: "Ctrl+2", needsDoc: true, run: () => useUi.setState({ zoomMode: "fit-width" }) },
   { id: "view.fitPage", label: "Fit page", shortcut: "Ctrl+0", needsDoc: true, run: () => useUi.setState({ zoomMode: "fit-page" }) },
   { id: "view.fullscreen", label: "Full-screen reading", shortcut: "F11", needsDoc: true, run: () => toggleFullscreen() },
-  { id: "view.exitFullscreen", label: "Exit full screen", keys: ["Escape"], run: () => useUi.getState().fullscreen && toggleFullscreen(false) },
+  { id: "view.escape", label: "Cancel", keys: ["Escape"], run: escape },
   { id: "view.sidebar", label: "Toggle sidebar", shortcut: "F4", run: () => useUi.setState((s) => ({ sidebarOpen: !s.sidebarOpen })) },
 
   { id: "nav.next", label: "Next page", shortcut: "PageDown", keys: ["ArrowRight", "Ctrl+ArrowDown"], needsDoc: true, run: page(1) },
@@ -100,6 +111,7 @@ export const commands: Command[] = [
   { id: "search.next", label: "Find next", shortcut: "F3", keys: ["Enter@search"], needsDoc: true, run: () => nextHit(1) },
   { id: "search.prev", label: "Find previous", shortcut: "Shift+F3", needsDoc: true, run: () => nextHit(-1) },
 
+  { id: "edit.delete", label: "Delete selection", keys: ["Delete", "Backspace"], needsDoc: true, run: deleteSelectedAnnotation },
   { id: "page.rotateRight", label: "Rotate right", shortcut: "Ctrl+R", needsDoc: true, run: () => rotate(90) },
   { id: "page.rotateLeft", label: "Rotate left", shortcut: "Ctrl+Shift+R", needsDoc: true, run: () => rotate(-90) },
   { id: "page.delete", label: "Delete pages", needsDoc: true, run: () => deletePagesAction() },

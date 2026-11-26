@@ -45,6 +45,10 @@ export interface UiState {
   /** Annotation selected on the canvas. */
   selectedAnnotation: { pageId: string; id: string } | null;
   dropHover: boolean;
+  /** Image/signature waiting to be placed with a click. */
+  pendingImage: { dataUrl: string; width: number; height: number; kind: "signature" | "image" } | null;
+  /** Annotation whose text is being edited inline. */
+  editingAnnotation: string | null;
 }
 
 export const MIN_ZOOM = 0.1;
@@ -77,6 +81,8 @@ export const useUi = create<UiState>(() => ({
   selectionAnchor: null,
   selectedAnnotation: null,
   dropHover: false,
+  pendingImage: null,
+  editingAnnotation: null,
 }));
 
 export function clampZoom(z: number): number {
@@ -93,5 +99,8 @@ export function setZoom(zoom: number, mode: ZoomMode = "custom") {
 }
 
 export function setTool(tool: Tool) {
-  useUi.setState({ tool, selectedAnnotation: null });
+  useUi.setState({ tool, selectedAnnotation: null, editingAnnotation: null, ...(tool === "signature" || tool === "image" ? {} : { pendingImage: null }) });
 }
+
+export const MARKUP_TOOLS: Tool[] = ["highlight", "underline", "strikeout"];
+export const DRAW_TOOLS: Tool[] = ["ink", "rect", "ellipse", "line", "arrow", "freetext", "note", "signature", "image"];
