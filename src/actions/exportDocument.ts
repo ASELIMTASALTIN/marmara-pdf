@@ -7,9 +7,13 @@ import { useDoc } from "../state/documentStore";
  * the original file was password protected.
  */
 export async function exportDocument(): Promise<Uint8Array> {
-  const { doc, annotations } = useDoc.getState();
+  const { doc, annotations, formValues } = useDoc.getState();
   if (!doc) throw new Error("No document is open");
   let bytes = doc.bytes;
+  if (Object.keys(formValues).length) {
+    const { applyFormValues } = await import("../core/forms/forms");
+    bytes = await applyFormValues(bytes, formValues);
+  }
   if (countAnnotations(annotations) > 0) {
     const { bakeAnnotations } = await import("../core/annotations/bake");
     bytes = await bakeAnnotations(bytes, doc.pageIds, annotations);

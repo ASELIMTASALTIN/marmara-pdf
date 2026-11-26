@@ -1732,3 +1732,91 @@ button:disabled {
     display: none;
   }
 }
+
+/* --- form fields ---------------------------------------------------------------- */
+.form-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.form-layer > * {
+  position: absolute;
+  pointer-events: auto;
+}
+.viewer.tool-edit-text .form-layer > *,
+.viewer:not(.tool-select):not(.tool-hand) .form-layer > * {
+  pointer-events: none;
+}
+.form-input {
+  margin: 0;
+  padding: 0 3px;
+  border: 1px solid rgb(19 102 196 / 0.35);
+  border-radius: 2px;
+  background: rgb(222 234 252 / 0.55);
+  color: #111;
+  font-family: Helvetica, Arial, sans-serif;
+  outline: none;
+  resize: none;
+}
+textarea.form-input {
+  padding-top: 2px;
+  line-height: 1.2;
+}
+.form-input:hover {
+  border-color: var(--accent);
+}
+.form-input:focus {
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgb(19 102 196 / 0.25);
+}
+.form-input[readonly],
+.form-input:disabled {
+  background: transparent;
+  border-color: transparent;
+}
+.form-select {
+  padding: 0 2px;
+}
+.form-check,
+.form-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(19 102 196 / 0.45);
+  background: rgb(222 234 252 / 0.55);
+  cursor: pointer;
+  color: #111;
+}
+.form-radio {
+  border-radius: 50%;
+}
+.form-check input,
+.form-radio input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.form-check span {
+  line-height: 1;
+  visibility: hidden;
+}
+.form-check.on span {
+  visibility: visible;
+}
+.form-radio span {
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background: #111;
+  visibility: hidden;
+}
+.form-radio.on span {
+  visibility: visible;
+}
+.form-check.ro,
+.form-radio.ro {
+  cursor: default;
+  background: transparent;
+}

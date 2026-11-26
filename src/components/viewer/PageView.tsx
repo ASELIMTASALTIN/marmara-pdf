@@ -79,7 +79,8 @@ export const PageView = memo(function PageView({ pdf, index, pageId, zoom, width
         canvas,
         viewport,
         transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : undefined,
-        annotationMode: pdfjs.AnnotationMode.ENABLE,
+        // Form fields are drawn as live inputs by FormLayer, everything else into the canvas.
+        annotationMode: pdfjs.AnnotationMode.ENABLE_FORMS,
       });
       task.promise
         .then(() => {

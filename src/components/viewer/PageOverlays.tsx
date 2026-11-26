@@ -3,6 +3,7 @@ import { CSS_UNITS, type PDFPageProxy } from "../../core/pdf/pdfjs";
 import { useUi } from "../../state/uiStore";
 import { AnnotationLayer } from "../annotations/AnnotationLayer";
 import { TextEditLayer } from "../textedit/TextEditLayer";
+import { FormLayer } from "../forms/FormLayer";
 import { pageRegistry } from "./pageRegistry";
 
 export interface OverlayProps {
@@ -32,6 +33,7 @@ export function PageOverlays({ page, pageIndex, pageId, zoom }: OverlayProps) {
   return (
     <>
       <span ref={anchor} hidden />
+      <FormLayer page={page} viewport={viewport} />
       <AnnotationLayer viewport={viewport} pageId={pageId} pageIndex={pageIndex} />
       {tool === "edit-text" && <TextEditLayer page={page} viewport={viewport} pageId={pageId} pageIndex={pageIndex} />}
     </>

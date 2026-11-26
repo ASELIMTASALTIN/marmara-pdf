@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { openPdf, readPageSizes, type PageSize, type PDFDocumentProxy } from "../core/pdf/pdfjs";
 import type { AnnotationMap } from "../core/annotations/types";
+import type { FormValues } from "../core/forms/forms";
 import { newId } from "../core/ids";
 
 /**
@@ -30,6 +31,7 @@ interface Snapshot {
   bytes: Uint8Array;
   pageIds: string[];
   annotations: AnnotationMap;
+  formValues: FormValues;
 }
 
 export interface DocState {
@@ -39,6 +41,8 @@ export interface DocState {
   /** Increments whenever `pdf` is replaced; used to invalidate render caches. */
   revision: number;
   annotations: AnnotationMap;
+  /** Form field values changed by the user (written into the PDF on save). */
+  formValues: FormValues;
   dirty: boolean;
   undoStack: Snapshot[];
   redoStack: Snapshot[];
@@ -56,6 +60,7 @@ export const useDoc = create<DocState>(() => ({
   pageSizes: [],
   revision: 0,
   annotations: {},
+  formValues: {},
   dirty: false,
   undoStack: [],
   redoStack: [],
@@ -117,6 +122,7 @@ export async function setDocument(input: {
     pageSizes,
     revision: s.revision + 1,
     annotations: {},
+    formValues: {},
     dirty: input.dirty ?? false,
     undoStack: [],
     redoStack: [],
@@ -132,6 +138,7 @@ export function closeDocument(): void {
     pageSizes: [],
     revision: s.revision + 1,
     annotations: {},
+    formValues: {},
     dirty: false,
     undoStack: [],
     redoStack: [],
@@ -139,7 +146,7 @@ export function closeDocument(): void {
   void prev?.loadingTask.destroy();
 }
 
-async function applyState(next: { bytes: Uint8Array; pageIds: string[]; annotations: AnnotationMap }) {
+async function applyState(next: { bytes: Uint8Array; pageIds: string[]; annotations: AnnotationMap; formValues: FormValues }) {
   const s = useDoc.getState();
   if (!s.doc) return;
   if (next.bytes !== s.doc.bytes) {
@@ -155,6 +162,7 @@ async function applyState(next: { bytes: Uint8Array; pageIds: string[]; annotati
       pageSizes,
       revision: st.revision + 1,
       annotations: next.annotations,
+      formValues: next.formValues,
     }));
     // Give in-flight renders of the old proxy a moment to settle before destroying it.
     setTimeout(() => void prev?.loadingTask.destroy(), 1500);
@@ -162,6 +170,7 @@ async function applyState(next: { bytes: Uint8Array; pageIds: string[]; annotati
     useDoc.setState((st) => ({
       doc: st.doc && { ...st.doc, pageIds: next.pageIds },
       annotations: next.annotations,
+      formValues: next.formValues,
     }));
   }
 }
@@ -172,15 +181,16 @@ async function applyState(next: { bytes: Uint8Array; pageIds: string[]; annotati
  */
 export async function commit(
   label: string,
-  change: { bytes?: Uint8Array; pageIds?: string[]; annotations?: AnnotationMap },
+  change: { bytes?: Uint8Array; pageIds?: string[]; annotations?: AnnotationMap; formValues?: FormValues },
 ): Promise<void> {
   const s = useDoc.getState();
   if (!s.doc) return;
-  const snapshot: Snapshot = { label, bytes: s.doc.bytes, pageIds: s.doc.pageIds, annotations: s.annotations };
+  const snapshot: Snapshot = { label, bytes: s.doc.bytes, pageIds: s.doc.pageIds, annotations: s.annotations, formValues: s.formValues };
   await applyState({
     bytes: change.bytes ?? s.doc.bytes,
     pageIds: change.pageIds ?? s.doc.pageIds,
     annotations: change.annotations ?? s.annotations,
+    formValues: change.formValues ?? s.formValues,
   });
   useDoc.setState((st) => ({
     undoStack: [...st.undoStack.slice(-(MAX_UNDO - 1)), snapshot],
@@ -198,7 +208,7 @@ export async function undo(): Promise<string | null> {
   const s = useDoc.getState();
   const snap = s.undoStack[s.undoStack.length - 1];
   if (!s.doc || !snap) return null;
-  const current: Snapshot = { label: snap.label, bytes: s.doc.bytes, pageIds: s.doc.pageIds, annotations: s.annotations };
+  const current: Snapshot = { label: snap.label, bytes: s.doc.bytes, pageIds: s.doc.pageIds, annotations: s.annotations, formValues: s.formValues };
   await applyState(snap);
   useDoc.setState((st) => ({
     undoStack: st.undoStack.slice(0, -1),
@@ -212,7 +222,7 @@ export async function redo(): Promise<string | null> {
   const s = useDoc.getState();
   const snap = s.redoStack[s.redoStack.length - 1];
   if (!s.doc || !snap) return null;
-  const current: Snapshot = { label: snap.label, bytes: s.doc.bytes, pageIds: s.doc.pageIds, annotations: s.annotations };
+  const current: Snapshot = { label: snap.label, bytes: s.doc.bytes, pageIds: s.doc.pageIds, annotations: s.annotations, formValues: s.formValues };
   await applyState(snap);
   useDoc.setState((st) => ({
     redoStack: st.redoStack.slice(0, -1),

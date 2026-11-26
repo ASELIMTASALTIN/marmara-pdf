@@ -87,7 +87,34 @@ async function scanned() {
   return out.save();
 }
 
+async function formPdf() {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const page = doc.addPage([595.28, 841.89]);
+  const form = doc.getForm();
+  const label = (t, y) => page.drawText(t, { x: 50, y, size: 12, font });
+  page.drawText("Application form", { x: 50, y: 780, size: 22, font });
+  label("Full name", 730);
+  form.createTextField("applicant.name").addToPage(page, { x: 160, y: 722, width: 280, height: 22 });
+  label("Comments", 680);
+  const c = form.createTextField("comments");
+  c.enableMultiline();
+  c.addToPage(page, { x: 160, y: 600, width: 280, height: 90 });
+  label("I agree to the terms", 560);
+  form.createCheckBox("agree").addToPage(page, { x: 200, y: 556, width: 16, height: 16 });
+  label("Preferred colour", 520);
+  const r = form.createRadioGroup("colour");
+  r.addOptionToPage("red", page, { x: 200, y: 516, width: 16, height: 16 });
+  r.addOptionToPage("blue", page, { x: 240, y: 516, width: 16, height: 16 });
+  label("City", 480);
+  const d = form.createDropdown("city");
+  d.addOptions(["Istanbul", "Ankara", "Izmir"]);
+  d.addToPage(page, { x: 160, y: 474, width: 160, height: 22 });
+  return doc.save();
+}
+
 const s = await sample();
+writeFileSync(join(out, "form.pdf"), await formPdf());
 writeFileSync(join(out, "scanned.pdf"), await scanned());
 writeFileSync(join(out, "sample.pdf"), s);
 writeFileSync(join(out, "second.pdf"), await large(3));
