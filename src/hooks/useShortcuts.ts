@@ -33,7 +33,8 @@ export function useShortcuts() {
   useEffect(() => {
     const map = bindingMap();
     const onKey = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || useDialogs.getState().dialogs.length) return; // handled locally / modal open
+      const hardened = (e as KeyboardEvent & { marmaraHardened?: boolean }).marmaraHardened;
+      if ((e.defaultPrevented && !hardened) || useDialogs.getState().dialogs.length) return; // handled locally / modal open
       const target = e.target as HTMLElement | null;
       const typing =
         !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));

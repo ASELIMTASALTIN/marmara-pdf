@@ -56,8 +56,10 @@ export function useAppLifecycle() {
     if (import.meta.env.DEV) return;
     const key = (e: KeyboardEvent) => {
       if (e.key === "F5" || (e.ctrlKey && e.key.toLowerCase() === "r" && !e.shiftKey) || (e.ctrlKey && e.shiftKey && e.key === "I")) {
-        // Ctrl+R is our "rotate" shortcut; prevent only the browser reload default.
+        // Ctrl+R is our "rotate" shortcut; prevent only the browser reload default
+        // and mark the event so the shortcut handler still runs.
         e.preventDefault();
+        (e as KeyboardEvent & { marmaraHardened?: boolean }).marmaraHardened = true;
       }
     };
     const menu = (e: MouseEvent) => {
