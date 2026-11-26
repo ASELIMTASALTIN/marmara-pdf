@@ -30,6 +30,12 @@ export interface FontInfo {
   fromUnicode: Map<string, number>;
   /** Codes seen in the page content (glyphs known to exist in a subset font). */
   usedCodes: Set<number>;
+  /** The font's PDF object (to reference it from other resource dictionaries). */
+  ref?: unknown;
+  /** Object number of the font dictionary (-1 if direct); identical fonts may use different resource keys. */
+  objNum: number;
+  /** Codes whose glyph is known to exist (Type3: glyph procedures present). Overrides subset heuristics. */
+  available?: Set<number>;
   /** Width in 1/1000 text-space units. */
   width(code: number): number;
   ascent: number;
@@ -183,7 +189,9 @@ export function loadFontInfo(mupdf: MuPDF, key: string, fontObj: PDFObject): Fon
 
   let toUnicode = new Map<number, string>();
   let bytesPerCode: 1 | 2 = isCID ? 2 : 1;
-  let editable = subtype !== "Type3";
+  const isType3 = subtype === "Type3";
+  const type3Available = new Set<number>();
+  let editable = true;
 
   const tu = f.get("ToUnicode");
   if (!tu.isNull()) {
@@ -226,15 +234,39 @@ export function loadFontInfo(mupdf: MuPDF, key: string, fontObj: PDFObject): Fon
     }
     // ToUnicode wins where present; encoding fills the rest.
     for (const [c, u] of encMap) if (!toUnicode.has(c)) toUnicode.set(c, u);
+    if (isType3 && differences) {
+      // Type3 glyphs are procedures named by /Differences; a code is drawable if its procedure exists.
+      const procs = R(f.get("CharProcs"));
+      let code = 0;
+      for (let i = 0; i < differences.length; i++) {
+        const item = differences.get(i);
+        if (item.isNumber()) code = item.asNumber();
+        else if (item.isName()) {
+          if (procs.isDictionary() && !procs.get(item.asName()).isNull()) type3Available.add(code);
+          code++;
+        }
+      }
+    }
     if (!toUnicode.size) editable = false;
     bytesPerCode = 1;
   }
 
+  const type3Box = (() => {
+    if (!isType3) return null;
+    const bb = R(f.get("FontBBox"));
+    if (!bb.isArray() || bb.length < 4) return null;
+    const v = [0, 1, 2, 3].map((k) => numOf(bb.get(k)));
+    return v[3] - v[1] > 0 ? v : null;
+  })();
   const fromUnicode = new Map<string, number>();
   for (const [code, u] of toUnicode) if (u && !fromUnicode.has(u)) fromUnicode.set(u, code);
 
   // --- widths ---
   let width: (code: number) => number;
+  // Type3 widths and bounding box are in glyph space; FontMatrix maps them to text space.
+  const fm = isType3 ? R(f.get("FontMatrix")) : null;
+  const fmScale = fm?.isArray() ? numOf(fm.get(0), 0.001) : 0.001;
+  const fmScaleY = fm?.isArray() ? numOf(fm.get(3), 0.001) : 0.001;
   if (isCID) {
     const dw = numOf(descendant!.get("DW"), 1000);
     const wmap = new Map<number, number>();
@@ -270,7 +302,8 @@ export function loadFontInfo(mupdf: MuPDF, key: string, fontObj: PDFObject): Fon
       }
     }
     width = (c) => {
-      const w = widths[c - first];
+      const raw = widths[c - first];
+      const w = raw !== undefined && isType3 ? (raw * fmScale) / 0.001 : raw;
       if (w !== undefined && w > 0) return w;
       if (builtin) {
         const u = toUnicode.get(c);
@@ -298,10 +331,18 @@ export function loadFontInfo(mupdf: MuPDF, key: string, fontObj: PDFObject): Fon
     toUnicode,
     fromUnicode,
     usedCodes: new Set(),
+    available: isType3 ? type3Available : undefined,
+    ref: fontObj,
+    objNum: fontObj.isIndirect() ? fontObj.asIndirect() : -1,
     width,
-    ascent: ascent || 800,
-    descent: descent || -200,
+    ascent: type3Box ? (type3Box[3] * fmScaleY) / 0.001 : ascent || 800,
+    descent: type3Box ? (type3Box[1] * fmScaleY) / 0.001 : descent || -200,
   };
+}
+
+/** True when two font resources refer to the same font. */
+export function sameFont(a: FontInfo, b: FontInfo): boolean {
+  return a === b || (a.objNum > 0 && a.objNum === b.objNum);
 }
 
 export function decodeCodes(font: FontInfo, bytes: Uint8Array): number[] {
@@ -325,7 +366,11 @@ export function encodeText(font: FontInfo, text: string): { codes: number[]; spa
   const spaceGaps: number[] = [];
   for (const ch of Array.from(text)) {
     const code = font.fromUnicode.get(ch);
-    const known = code !== undefined && (!font.isSubset || font.usedCodes.has(code) || (font.bytesPerCode === 2 && font.toUnicode.has(code)));
+    const known =
+      code !== undefined &&
+      (font.available
+        ? font.available.has(code)
+        : !font.isSubset || font.usedCodes.has(code) || (font.bytesPerCode === 2 && font.toUnicode.has(code)));
     if (!known) {
       if (ch === " ") {
         spaceGaps.push(codes.length);

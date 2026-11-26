@@ -88,7 +88,7 @@ export async function runOcr(pages: number[], lang: OcrLanguage): Promise<void> 
     if (!pdf || !doc) return;
     const startBytes = doc.bytes;
     try {
-      const { recognizeImage } = await import("../core/ocr/recognize");
+      const { recognizeAuto } = await import("../core/ocr/recognize");
       const { addOcrTextLayers } = await import("../core/ocr/textLayer");
       const results: { pageIndex: number; lines: OcrLineGeom[] }[] = [];
       let words = 0;
@@ -100,7 +100,7 @@ export async function runOcr(pages: number[], lang: OcrLanguage): Promise<void> 
             const label = `Recognising text — page ${i + 1} (${k + 1} of ${pages.length})`;
             setBusyLabel(label);
             const { canvas, viewport } = await renderForOcr(pdf, i);
-            const { lines } = await recognizeImage(canvas, lang, (p) => setBusyLabel(`${label} — ${Math.round(p * 100)}%`));
+            const { lines } = await recognizeAuto(canvas, lang, (p) => setBusyLabel(`${label} — ${Math.round(p * 100)}%`));
             canvas.width = canvas.height = 0; // free memory early
             words += lines.reduce((n, l) => n + l.words.length, 0);
             results.push({ pageIndex: i, lines: toGeometry(lines, viewport) });
@@ -166,7 +166,7 @@ export async function ocrDialog(): Promise<void> {
         label: "Document language",
         value: localStorage.getItem(LANG_KEY) || "tur+eng",
         options: [
-          { value: "tur+eng", label: "Turkish + English" },
+          { value: "tur+eng", label: "Turkish + English (automatic)" },
           { value: "tur", label: "Turkish" },
           { value: "eng", label: "English" },
         ],

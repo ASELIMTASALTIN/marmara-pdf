@@ -13,7 +13,7 @@ async function samplePdf(rotate = 0) {
   const p = doc.addPage([600, 800]);
   p.drawText("Invoice number 12345", { x: 50, y: 700, size: 20, font: bold });
   p.drawText("The quick brown fox jumps over the lazy dog.", { x: 50, y: 650, size: 12, font, color: rgb(0.2, 0.2, 0.2) });
-  p.drawText("Second line stays untouched.", { x: 50, y: 630, size: 12, font });
+  p.drawText("Second line stays untouched.", { x: 50, y: 560, size: 12, font });
   p.drawRectangle({ x: 300, y: 100, width: 100, height: 50, color: rgb(1, 0, 0) });
   if (rotate) p.setRotation(degrees(rotate));
   return doc.save();
@@ -143,15 +143,16 @@ describe("text editing", () => {
     const bytes = await samplePdf();
     const r = await insertText(bytes, 0, { origin: [60, 400], dir: [1, 0], up: [0, 1], text: "Yeni satır ğş\nSecond", size: 14, color: "#d1242f", family: "sans" });
     const blocks = await analyzePageText(r.bytes, 0);
-    const a = blocks.find((b) => b.text === "Yeni satır ğş")!;
-    const b = blocks.find((x) => x.text === "Second")!;
+    // the two inserted lines form one paragraph with 1.25 line spacing
+    const a = blocks.find((b) => b.text === "Yeni satır ğş Second")!;
+    expect(a.lines).toBe(2);
+    expect(a.leading).toBeCloseTo(14 * 1.25, 1);
     expect(a.origin[0]).toBeCloseTo(60, 1);
     expect(a.origin[1]).toBeCloseTo(400, 1);
-    expect(b.origin[1]).toBeCloseTo(400 - 14 * 1.25, 1);
     expect(a.color).toBe("#d1242f");
     // inserted text is itself editable again (in place, since its glyphs are embedded)
-    const r2 = await applyTextEdit(r.bytes, 0, { blockId: a.id, text: "Yeni şatır" });
-    expect(r2.mode).toBe("in-place");
+    const r2 = await applyTextEdit(r.bytes, 0, { blockId: a.id, text: "Yeni şatır Second" });
+    expect(r2.mode).toBe("reflowed");
     expect(pageText(r2.bytes)).toContain("Yeni şatır");
   });
 
@@ -195,4 +196,115 @@ describe("text editing", () => {
     doc.destroy();
     expect(fox.text.length).toBeGreaterThan(10);
   });
+
+  it("re-flows a multi-line paragraph to its width and leading", async () => {
+    const doc = await PDFDocument.create();
+    const font = await doc.embedFont(StandardFonts.TimesRoman);
+    const p = doc.addPage([600, 800]);
+    const lines = [
+      "Marmara PDF edits whole paragraphs. When a sentence",
+      "becomes longer, the following lines move down and the",
+      "text is wrapped again to the original column width,",
+      "using the same font and the same line spacing.",
+    ];
+    lines.forEach((t, i) => p.drawText(t, { x: 72, y: 700 - i * 14, size: 11, font }));
+    p.drawText("A separate paragraph far below.", { x: 72, y: 500, size: 11, font });
+    const bytes = await doc.save();
+    const blocks = await analyzePageText(bytes, 0);
+    const para = blocks.find((b) => b.text.startsWith("Marmara PDF edits"))!;
+    expect(para.lines).toBe(4);
+    expect(para.leading).toBeCloseTo(14, 1);
+    expect(blocks.some((b) => b.text.startsWith("A separate paragraph"))).toBe(true);
+    const longer = para.text.replace("When a sentence becomes longer,", "When a sentence becomes considerably longer than it was before,");
+    const r = await applyTextEdit(bytes, 0, { blockId: para.id, text: longer });
+    expect(r.mode).toBe("reflowed");
+    expect(r.font).toMatch(/Times/);
+    const after = (await analyzePageText(r.bytes, 0)).find((b) => b.text.startsWith("Marmara PDF edits"))!;
+    expect(after.lines).toBeGreaterThan(4);
+    expect(after.text).toBe(longer);
+    expect(after.origin[0]).toBeCloseTo(72, 0);
+    expect(after.origin[1]).toBeCloseTo(700, 0);
+    expect(after.leading).toBeCloseTo(14, 1);
+    expect(after.width).toBeLessThanOrEqual(para.width + 1);
+    // other paragraph untouched
+    expect(pageText(r.bytes)).toContain("A separate paragraph far below.");
+  });
+
+  it("recolours a paragraph in place", async () => {
+    const doc = await PDFDocument.create();
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const p = doc.addPage([600, 800]);
+    ["First line of text here", "second line of text here", "third line of text"].forEach((t, i) => p.drawText(t, { x: 72, y: 700 - i * 14, size: 11, font }));
+    const bytes = await doc.save();
+    const para = (await analyzePageText(bytes, 0))[0];
+    const r = await applyTextEdit(bytes, 0, { blockId: para.id, text: para.text, color: "#d1242f" });
+    expect(r.mode).toBe("in-place");
+    const after = (await analyzePageText(r.bytes, 0))[0];
+    expect(after.color).toBe("#d1242f");
+    expect(after.lines).toBe(3);
+  });
+
+  it("edits text inside a form XObject (copy-on-write)", async () => {
+    const src = await PDFDocument.create();
+    const f = await src.embedFont(StandardFonts.Helvetica);
+    src.addPage([300, 100]).drawText("Letterhead Marmara Ltd", { x: 10, y: 50, size: 14, font: f });
+    const doc = await PDFDocument.create();
+    const [embedded] = await doc.embedPdf(await src.save());
+    const p1 = doc.addPage([600, 800]);
+    const p2 = doc.addPage([600, 800]);
+    p1.drawPage(embedded, { x: 100, y: 600 });
+    p2.drawPage(embedded, { x: 100, y: 600 });
+    const bytes = await doc.save();
+    const blk = (await analyzePageText(bytes, 0)).find((b) => b.text.startsWith("Letterhead"))!;
+    expect(blk).toBeDefined();
+    expect(blk.inXObject).toBe(true);
+    expect(blk.origin[0]).toBeCloseTo(110, 0);
+    const r = await applyTextEdit(bytes, 0, { blockId: blk.id, text: "Letterhead Marmara Inc" });
+    expect(r.mode).toBe("in-place");
+    expect(pageText(r.bytes, 0)).toContain("Letterhead Marmara Inc");
+    // the second page still uses the original, shared XObject
+    expect(pageText(r.bytes, 1)).toContain("Letterhead Marmara Ltd");
+  });
+
+  it("edits text set in a Type3 font", async () => {
+    const bytes = type3Pdf();
+    const blocks = await analyzePageText(bytes, 0);
+    const blk = blocks.find((b) => b.text === "ABBA")!;
+    expect(blk).toBeDefined();
+    expect(blk.editable).toBe(true);
+    // glyphs A and B exist: in place
+    const r1 = await applyTextEdit(bytes, 0, { blockId: blk.id, text: "BAAB" });
+    expect(r1.mode).toBe("in-place");
+    expect(pageText(r1.bytes)).toContain("BAAB");
+    // C has no glyph procedure: re-typeset with a built-in font
+    const r2 = await applyTextEdit(bytes, 0, { blockId: blk.id, text: "CAB" });
+    expect(r2.mode).toBe("retypeset");
+    expect(pageText(r2.bytes)).toContain("CAB");
+  });
 });
+
+/** Hand-written PDF with a Type3 font whose glyphs A and B are simple boxes. */
+function type3Pdf(): Uint8Array {
+  const NL = String.fromCharCode(10);
+  const content = "BT /T3 24 Tf 100 700 Td (ABBA) Tj ET";
+  const stream = (body: string) => `<< /Length ${body.length} >>${NL}stream${NL}${body}${NL}endstream`;
+  const objs = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /T3 5 0 R >> >> /Contents 4 0 R >>",
+    stream(content),
+    "<< /Type /Font /Subtype /Type3 /FontBBox [0 0 750 750] /FontMatrix [0.001 0 0 0.001 0 0] /CharProcs << /A 6 0 R /B 7 0 R >> /Encoding << /Type /Encoding /Differences [65 /A /B] >> /FirstChar 65 /LastChar 66 /Widths [800 800] /Resources << >> >>",
+    stream("800 0 0 0 750 750 d1 0 0 750 750 re f"),
+    stream("800 0 0 0 750 750 d1 0 0 375 750 re f"),
+  ];
+  let out = `%PDF-1.7${NL}`;
+  const offsets: number[] = [];
+  objs.forEach((o, i) => {
+    offsets.push(out.length);
+    out += `${i + 1} 0 obj${NL}${o}${NL}endobj${NL}`;
+  });
+  const xref = out.length;
+  out += `xref${NL}0 ${objs.length + 1}${NL}0000000000 65535 f ${NL}` + offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n ${NL}`).join("");
+  out += `trailer${NL}<< /Size ${objs.length + 1} /Root 1 0 R >>${NL}startxref${NL}${xref}${NL}%%EOF${NL}`;
+  return new TextEncoder().encode(out);
+}

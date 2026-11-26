@@ -31,20 +31,15 @@ export interface OcrLine {
   baseline: [number, number];
 }
 
-let worker: Promise<Worker> | null = null;
-let workerLang = "";
+/** One worker per language set (Turkish+English and English are often both used). */
+const workers = new Map<OcrLanguage, Promise<Worker>>();
 let progressSink: ((p: number) => void) | null = null;
 
 async function getWorker(lang: OcrLanguage): Promise<Worker> {
-  if (worker && workerLang === lang) return worker;
-  if (worker) {
-    const old = worker;
-    worker = null;
-    void old.then((w) => w.terminate()).catch(() => {});
-  }
+  const existing = workers.get(lang);
+  if (existing) return existing;
   const { createWorker } = await import("tesseract.js");
-  workerLang = lang;
-  worker = createWorker(lang.split("+"), 1 /* LSTM only */, {
+  const w = createWorker(lang.split("+"), 1 /* LSTM only */, {
     workerPath: `${BASE}worker.min.js`,
     corePath: `${BASE}core`,
     langPath: `${BASE}lang`,
@@ -54,16 +49,36 @@ async function getWorker(lang: OcrLanguage): Promise<Worker> {
       if (m.status === "recognizing text") progressSink?.(m.progress);
     },
   });
-  worker.catch(() => {
-    worker = null;
-  });
-  return worker;
+  workers.set(lang, w);
+  w.catch(() => workers.delete(lang));
+  return w;
 }
 
 export async function terminateOcr() {
-  const w = worker;
-  worker = null;
-  if (w) await (await w).terminate().catch(() => {});
+  const all = [...workers.values()];
+  workers.clear();
+  await Promise.all(all.map((w) => w.then((x) => x.terminate()).catch(() => {})));
+}
+
+/** Letters that only occur in Turkish text (İ excluded: it is the ambiguous one). */
+const TURKISH_LETTERS = /[ğĞşŞıçÇöÖüÜ]/;
+
+/**
+ * Recognises with the requested language. For "Turkish + English", pages
+ * without any Turkish-specific letters are re-read with the English model:
+ * the Turkish model otherwise tends to read a plain "I" as "İ" (e.g. "İnvoice").
+ */
+export async function recognizeAuto(
+  image: HTMLCanvasElement,
+  lang: OcrLanguage,
+  onProgress?: (p: number) => void,
+): Promise<{ lines: OcrLine[]; confidence: number; usedLang: OcrLanguage }> {
+  const first = await recognizeImage(image, lang, onProgress ? (p) => onProgress(lang === "tur+eng" ? p * 0.6 : p) : undefined);
+  if (lang !== "tur+eng") return { ...first, usedLang: lang };
+  const text = first.lines.map((l) => l.text).join(" ");
+  if (TURKISH_LETTERS.test(text) || !/İ/.test(text)) return { ...first, usedLang: lang };
+  const eng = await recognizeImage(image, "eng", onProgress ? (p) => onProgress(0.6 + p * 0.4) : undefined);
+  return eng.confidence >= first.confidence - 5 ? { ...eng, usedLang: "eng" } : { ...first, usedLang: lang };
 }
 
 /** Recognises text in an image (canvas) and returns lines with word boxes. */

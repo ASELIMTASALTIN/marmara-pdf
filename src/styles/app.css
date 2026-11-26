@@ -1820,3 +1820,7 @@ textarea.form-input {
   cursor: default;
   background: transparent;
 }
+.te-input.para {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}

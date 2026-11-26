@@ -63,9 +63,20 @@ function Editor({ a, vp }: { a: ActiveTextEdit; vp: PageViewport }) {
     top = o[1] - fontPx * 0.82;
   }
 
+  const isPara = !!a.block && a.block.lines > 1;
+  const paraWidth = isPara ? a.block!.width * s * ((a.size || 1) / a.block!.size) : 0;
   useLayoutEffect(() => {
-    if (measureRef.current) setWidth(Math.max(fontPx * 2, measureRef.current.offsetWidth + fontPx));
-  }, [a.text, fontPx, fam]);
+    if (isPara) setWidth(paraWidth + fontPx * 0.6);
+    else if (measureRef.current) setWidth(Math.max(fontPx * 2, measureRef.current.offsetWidth + fontPx));
+  }, [a.text, fontPx, fam, isPara, paraWidth]);
+  // Paragraphs grow with their content.
+  const [paraHeight, setParaHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!isPara || !el) return;
+    el.style.height = "auto";
+    setParaHeight(el.scrollHeight + 2);
+  }, [a.text, width, isPara, fontPx]);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -100,7 +111,7 @@ function Editor({ a, vp }: { a: ActiveTextEdit; vp: PageViewport }) {
     fontWeight: a.block?.bold ? 700 : 400,
     fontStyle: a.block?.italic ? "italic" : "normal",
     fontSize: fontPx,
-    lineHeight: 1.25,
+    lineHeight: isPara && a.block!.leading ? a.block!.leading / a.block!.size : 1.25,
     color: a.color,
   };
 
@@ -148,24 +159,25 @@ function Editor({ a, vp }: { a: ActiveTextEdit; vp: PageViewport }) {
         </span>
         <textarea
           ref={inputRef}
-          className="te-input"
+          className={`te-input${isPara ? " para" : ""}`}
           value={a.text}
           rows={lines}
           spellCheck={false}
-          style={{ ...style, width, height: fontPx * 1.25 * lines + 4 }}
-          onChange={(e) => updateEdit({ text: a.block ? e.target.value.replace(/\n/g, " ") : e.target.value })}
+          style={{ ...style, width, height: isPara ? paraHeight || undefined : fontPx * 1.25 * lines + 4 }}
+          onChange={(e) => updateEdit({ text: a.block && !isPara ? e.target.value.replace(/\n/g, " ") : e.target.value })}
           onKeyDown={(e) => {
             e.stopPropagation();
             if (e.key === "Escape") {
               e.preventDefault();
               cancelEdit();
-            } else if (e.key === "Enter" && (!e.shiftKey || a.block)) {
+            } else if (e.key === "Enter" && (!e.shiftKey || (a.block && !isPara))) {
               e.preventDefault();
               void commitEdit();
             }
           }}
         />
         {!a.block && <div className="te-hint">Enter to add · Shift+Enter for a new line · Esc to cancel</div>}
+        {isPara && <div className="te-hint">Paragraph: the text re-flows when applied · Enter to apply · Shift+Enter for a line break</div>}
       </div>
     </>
   );
@@ -241,7 +253,7 @@ export function TextEditLayer({ viewport: vp, pageIndex }: TextEditLayerProps) {
             style={{ left: box.x - 2, top: box.y - 1, width: box.w + 4, height: box.h + 2 }}
             title={
               b.editable
-                ? `${b.fontName} · ${b.size.toFixed(1)} pt${b.invisible ? " · recognised (OCR) text" : ""}`
+                ? `${b.fontName} · ${b.size.toFixed(1)} pt${b.lines > 1 ? ` · paragraph (${b.lines} lines)` : ""}${b.inXObject ? " · in a reusable element" : ""}${b.invisible ? " · recognised (OCR) text" : ""}`
                 : `This text uses a font that cannot be decoded (${b.fontName})`
             }
           />
