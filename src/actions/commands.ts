@@ -124,6 +124,9 @@ export const commands: Command[] = [
   { id: "page.extract", label: "Extract pages…", needsDoc: true, run: () => extract() },
   { id: "page.split", label: "Split document…", needsDoc: true, run: splitDialog },
 
+  { id: "sign.document", label: "Sign digitally…", needsDoc: true, run: () => import("./signatureActions").then((m) => m.signDocumentFlow()) },
+  { id: "sign.ids", label: "Manage digital IDs…", run: () => import("../components/signatures/DigitalIdsDialog").then((m) => m.digitalIdsDialog()) },
+  { id: "sign.panel", label: "Signatures", needsDoc: true, run: () => useUi.setState({ sidebarOpen: true, sidebarTab: "signatures" }) },
   { id: "ocr.run", label: "Recognise text (OCR)…", needsDoc: true, run: () => import("./ocrActions").then((m) => m.ocrDialog()) },
   { id: "tool.select", label: "Select", shortcut: "V", needsDoc: true, run: () => setTool("select") },
   { id: "tool.hand", label: "Hand", shortcut: "H", needsDoc: true, run: tool("hand") },

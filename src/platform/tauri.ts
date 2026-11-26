@@ -68,6 +68,12 @@ export const tauriPlatform: Platform = {
     );
   },
 
+  async pickFile({ title, filterName, extensions }) {
+    const picked = await open({ multiple: false, title, filters: [{ name: filterName, extensions }] });
+    if (!picked || Array.isArray(picked)) return null;
+    return { name: baseName(picked), path: picked, bytes: new Uint8Array(await invoke<ArrayBuffer>("read_file", { path: picked })) };
+  },
+
   async saveExport(bytes, { suggestedName, filterName, extensions }) {
     let target = await save({ defaultPath: suggestedName, filters: [{ name: filterName, extensions }], title: "Export" });
     if (!target) return null;

@@ -61,7 +61,7 @@ function optLabel(widgetObj: PDFObject): string | null {
  * Writes form values into the PDF's AcroForm fields. MuPDF regenerates the
  * widget appearance streams so the values display in every PDF reader.
  */
-export async function applyFormValues(bytes: Uint8Array, values: FormValues): Promise<Uint8Array> {
+export async function applyFormValues(bytes: Uint8Array, values: FormValues, incremental = false): Promise<Uint8Array> {
   const names = Object.keys(values);
   if (!names.length) return bytes;
   const { doc } = await openMupdf(bytes);
@@ -112,7 +112,7 @@ export async function applyFormValues(bytes: Uint8Array, values: FormValues): Pr
       }
       if (changed) page.update();
     }
-    return saveMupdf(doc, "compress");
+    return saveMupdf(doc, incremental && doc.canBeSavedIncrementally() ? "incremental" : "compress");
   } finally {
     doc.destroy();
   }

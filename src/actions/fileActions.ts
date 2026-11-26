@@ -118,6 +118,7 @@ export async function openFile(file: OpenedFile, opts: { dirty?: boolean; id?: s
   resetViewState();
   addRecent(file.path, file.name);
   void importExistingAnnotations();
+  void import("./signatureActions").then((m) => m.refreshSignatures());
   return true;
 }
 

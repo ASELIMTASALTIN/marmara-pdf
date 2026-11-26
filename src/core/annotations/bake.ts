@@ -113,9 +113,9 @@ export async function bakeAnnotations(
   bytes: Uint8Array,
   pageIds: string[],
   annotations: AnnotationMap,
-  password?: string,
+  incremental = false,
 ): Promise<Uint8Array> {
-  const { mupdf, doc } = await openMupdf(bytes, password);
+  const { mupdf, doc } = await openMupdf(bytes);
   try {
     pageIds.forEach((id, i) => {
       const list = annotations[id];
@@ -132,7 +132,7 @@ export async function bakeAnnotations(
       }
       page.update();
     });
-    return saveMupdf(doc, password ? "compress,encrypt=keep" : "compress");
+    return saveMupdf(doc, incremental && doc.canBeSavedIncrementally() ? "incremental" : "compress");
   } finally {
     doc.destroy();
   }

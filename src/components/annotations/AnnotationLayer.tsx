@@ -282,7 +282,7 @@ function NoteIcon({ a, vp, selected, onCommit }: { a: Extract<Annotation, { type
 
 // ---------------------------------------------------------------------------
 
-export const AnnotationLayer = memo(function AnnotationLayer({ viewport: vp, pageId }: Props) {
+export const AnnotationLayer = memo(function AnnotationLayer({ viewport: vp, pageId, pageIndex }: Props) {
   const annotations = useDoc((s) => s.annotations[pageId]) ?? EMPTY;
   const tool = useUi((s) => s.tool);
   const selected = useUi((s) => s.selectedAnnotation);
@@ -472,6 +472,10 @@ export const AnnotationLayer = memo(function AnnotationLayer({ viewport: vp, pag
       return;
     }
     if (Math.hypot(d.x1 - d.x0, d.y1 - d.y0) < 4) return;
+    if (d.tool === "digital-signature") {
+      void import("../../actions/signatureActions").then((m) => m.signatureBoxDrawn(pageIndex, viewRectToPdf(vp, d.x0, d.y0, d.x1, d.y1)));
+      return;
+    }
     if (d.tool === "rect" || d.tool === "ellipse") {
       void addAnnotation(pageId, { type: d.tool, rect: viewRectToPdf(vp, d.x0, d.y0, d.x1, d.y1), color: st.color, width: st.width, opacity: st.opacity, fill: null });
     } else if (d.tool === "line" || d.tool === "arrow") {
@@ -560,7 +564,20 @@ export const AnnotationLayer = memo(function AnnotationLayer({ viewport: vp, pag
     } else {
       const { x0, y0, x1, y1 } = draft;
       const w = Math.max(0.75, st.width * vp.scale);
-      if (draft.tool === "rect")
+      if (draft.tool === "digital-signature")
+        draftEl = (
+          <rect
+            x={Math.min(x0, x1)}
+            y={Math.min(y0, y1)}
+            width={Math.abs(x1 - x0)}
+            height={Math.abs(y1 - y0)}
+            stroke="#1366c4"
+            strokeWidth={1.5}
+            strokeDasharray="6 4"
+            fill="rgba(19,102,196,0.08)"
+          />
+        );
+      else if (draft.tool === "rect")
         draftEl = <rect x={Math.min(x0, x1)} y={Math.min(y0, y1)} width={Math.abs(x1 - x0)} height={Math.abs(y1 - y0)} stroke={st.color} strokeWidth={w} fill="none" />;
       else if (draft.tool === "ellipse")
         draftEl = <ellipse cx={(x0 + x1) / 2} cy={(y0 + y1) / 2} rx={Math.abs(x1 - x0) / 2} ry={Math.abs(y1 - y0) / 2} stroke={st.color} strokeWidth={w} fill="none" />;

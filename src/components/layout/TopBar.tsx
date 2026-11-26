@@ -22,6 +22,9 @@ import {
   FileText,
   Images,
   Share,
+  FileSignature,
+  KeyRound,
+  ShieldCheck,
 } from "lucide-react";
 import { useDoc } from "../../state/documentStore";
 import { useSearch } from "../../state/searchStore";
@@ -69,6 +72,16 @@ function openExportMenu(e: React.MouseEvent) {
   ]);
 }
 
+function openSignMenu(e: React.MouseEvent) {
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  showContextMenu({ clientX: r.left, clientY: r.bottom + 4 }, [
+    { label: "Sign digitally…", icon: FileSignature, onSelect: () => runCommand("sign.document") },
+    { label: "Signature panel", icon: ShieldCheck, onSelect: () => runCommand("sign.panel") },
+    { kind: "separator" },
+    { label: "Manage digital IDs…", icon: KeyRound, onSelect: () => runCommand("sign.ids") },
+  ]);
+}
+
 export function TopBar() {
   const doc = useDoc((s) => s.doc);
   const dirty = useDoc((s) => s.dirty);
@@ -88,6 +101,13 @@ export function TopBar() {
           <button type="button" className="menu-btn" onClick={openExportMenu} title="Export / convert">
             <Share size={16} strokeWidth={1.75} />
             <span>Export</span>
+            <ChevronDown size={14} />
+          </button>
+        )}
+        {doc && (
+          <button type="button" className="menu-btn" onClick={openSignMenu} title="Digital signatures">
+            <FileSignature size={16} strokeWidth={1.75} />
+            <span>Sign</span>
             <ChevronDown size={14} />
           </button>
         )}

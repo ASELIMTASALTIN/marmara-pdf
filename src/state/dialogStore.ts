@@ -86,12 +86,15 @@ export async function confirm(
 }
 
 export function toast(message: string, kind: Toast["kind"] = "info", ms = kind === "error" ? 6000 : 3000) {
+  // Operations the user cancelled in a confirmation dialog are not errors.
+  if (kind === "error" && /(^|: )Cancelled$/.test(message)) return;
   const id = seq++;
   useDialogs.setState((s) => ({ toasts: [...s.toasts.slice(-4), { id, kind, message }] }));
   setTimeout(() => useDialogs.setState((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), ms);
 }
 
 export function errorMessage(e: unknown): string {
+  if (e instanceof Error && e.name === "CancelledError") return "Cancelled";
   if (e instanceof Error) return e.message;
   if (typeof e === "string") return e;
   return "Unexpected error";

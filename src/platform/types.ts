@@ -35,6 +35,8 @@ export interface Platform {
   saveManyPdfs(files: { name: string; bytes: Uint8Array }[], title: string): Promise<string | null>;
   pickImage(): Promise<OpenedFile | null>;
   pickImages(): Promise<OpenedFile[]>;
+  /** Picks any single file matching the extensions. */
+  pickFile(opts: { title: string; filterName: string; extensions: string[] }): Promise<OpenedFile | null>;
   /** Saves a non-PDF export (docx, png, jpg, txt). Returns the path/name or null if cancelled. */
   saveExport(bytes: Uint8Array, opts: { suggestedName: string; filterName: string; extensions: string[] }): Promise<string | null>;
   /** Writes several export files into a user-chosen folder. */

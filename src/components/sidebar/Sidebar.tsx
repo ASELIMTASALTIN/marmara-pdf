@@ -1,4 +1,6 @@
-import { FilePlus2, FileStack, Layers, MessageSquareText, RotateCw, Trash2 } from "lucide-react";
+import { FilePlus2, FileStack, Layers, MessageSquareText, RotateCw, ShieldCheck, Trash2 } from "lucide-react";
+import { SignaturePanel } from "../signatures/SignaturePanel";
+import { useSignatures } from "../../actions/signatureActions";
 import { useUi } from "../../state/uiStore";
 import { useDoc } from "../../state/documentStore";
 import { countAnnotations } from "../../core/annotations/types";
@@ -12,6 +14,7 @@ export function Sidebar() {
   const selected = useUi((s) => s.selectedPages);
   const annCount = useDoc((s) => countAnnotations(s.annotations));
   const pageCount = useDoc((s) => s.pageSizes.length);
+  const sigCount = useSignatures((s) => s.signatures?.length ?? 0);
 
   return (
     <aside className="sidebar" aria-label="Sidebar">
@@ -22,10 +25,22 @@ export function Sidebar() {
         <button
           role="tab"
           aria-selected={tab === "annotations"}
+          aria-label="Comments"
+          title="Comments"
           className={tab === "annotations" ? "active" : ""}
           onClick={() => useUi.setState({ sidebarTab: "annotations" })}
         >
-          <MessageSquareText size={15} /> Comments {annCount > 0 && <span className="badge">{annCount}</span>}
+          <MessageSquareText size={15} /> {annCount > 0 ? <span className="badge">{annCount}</span> : null}
+        </button>
+        <button
+          role="tab"
+          aria-selected={tab === "signatures"}
+          title="Signatures"
+          aria-label="Signatures"
+          className={tab === "signatures" ? "active" : ""}
+          onClick={() => useUi.setState({ sidebarTab: "signatures" })}
+        >
+          <ShieldCheck size={15} /> {sigCount > 0 ? <span className="badge">{sigCount}</span> : null}
         </button>
       </div>
       {tab === "pages" ? (
@@ -40,8 +55,10 @@ export function Sidebar() {
           </div>
           <ThumbnailSidebar />
         </>
-      ) : (
+      ) : tab === "annotations" ? (
         <AnnotationList />
+      ) : (
+        <SignaturePanel />
       )}
     </aside>
   );

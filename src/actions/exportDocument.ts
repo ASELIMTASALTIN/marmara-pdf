@@ -10,13 +10,15 @@ export async function exportDocument(): Promise<Uint8Array> {
   const { doc, annotations, formValues } = useDoc.getState();
   if (!doc) throw new Error("No document is open");
   let bytes = doc.bytes;
+  // Signed and otherwise unmodified: append changes as incremental updates so signatures stay valid.
+  const incremental = !!doc.signatures && doc.bytes === doc.original;
   if (Object.keys(formValues).length) {
     const { applyFormValues } = await import("../core/forms/forms");
-    bytes = await applyFormValues(bytes, formValues);
+    bytes = await applyFormValues(bytes, formValues, incremental);
   }
   if (countAnnotations(annotations) > 0) {
     const { bakeAnnotations } = await import("../core/annotations/bake");
-    bytes = await bakeAnnotations(bytes, doc.pageIds, annotations);
+    bytes = await bakeAnnotations(bytes, doc.pageIds, annotations, incremental);
   }
   if (doc.protection?.userPassword) {
     const { encryptPdf } = await import("../core/mupdf/security");

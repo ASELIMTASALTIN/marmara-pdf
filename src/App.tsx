@@ -15,6 +15,7 @@ import { useShortcuts } from "./hooks/useShortcuts";
 import { useAppLifecycle } from "./hooks/useAppLifecycle";
 import { toggleFullscreen } from "./actions/commands";
 import { cancelEdit } from "./actions/textEditActions";
+import { SignatureBanner } from "./components/signatures/SignaturePanel";
 
 export default function App() {
   const hasDoc = useDoc((s) => !!s.doc);
@@ -45,6 +46,7 @@ export default function App() {
             {sidebarOpen && !fullscreen && <Sidebar />}
             <section className="document-area">
               <SearchBar />
+              {!fullscreen && <SignatureBanner />}
               <Viewer />
               {fullscreen && (
                 <button className="exit-fullscreen" onClick={() => toggleFullscreen(false)}>

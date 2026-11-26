@@ -2,6 +2,15 @@ import { create } from "zustand";
 import { openPdf, readPageSizes, type PageSize, type PDFDocumentProxy } from "../core/pdf/pdfjs";
 import type { AnnotationMap } from "../core/annotations/types";
 import type { FormValues } from "../core/forms/forms";
+import { confirm } from "./dialogStore";
+
+/** Thrown when the user cancels an operation in a confirmation dialog. */
+export class CancelledError extends Error {
+  constructor() {
+    super("Cancelled");
+    this.name = "CancelledError";
+  }
+}
 import { newId } from "../core/ids";
 
 /**
@@ -22,6 +31,12 @@ export interface DocumentData {
   pageIds: string[];
   /** Set when the original file was encrypted; saving re-applies the password. */
   protection?: { userPassword: string };
+  /** Bytes as opened (signed documents are saved incrementally on top of them). */
+  original?: Uint8Array;
+  /** Number of digital signatures in the opened file. */
+  signatures?: number;
+  /** The user accepted that rewriting edits invalidate the signatures. */
+  signatureWarningAccepted?: boolean;
   /** True once the user has confirmed overwriting the original file. */
   overwriteConfirmed?: boolean;
 }
@@ -115,6 +130,7 @@ export async function setDocument(input: {
       name: input.name,
       path: input.path,
       bytes: input.bytes,
+      original: input.bytes,
       pageIds: pageSizes.map(() => newId()),
       protection: input.protection,
     },
@@ -185,6 +201,16 @@ export async function commit(
 ): Promise<void> {
   const s = useDoc.getState();
   if (!s.doc) return;
+  // Rewriting the file of a signed document breaks its signatures: ask once.
+  if (change.bytes && change.bytes !== s.doc.bytes && s.doc.signatures && !s.doc.signatureWarningAccepted) {
+    const ok = await confirm(
+      "Document is digitally signed",
+      `This change rewrites the document, which invalidates its ${s.doc.signatures} digital signature${s.doc.signatures > 1 ? "s" : ""}. Annotations and form filling keep signatures valid.`,
+      { confirmLabel: "Continue and invalidate", danger: true },
+    );
+    if (!ok) throw new CancelledError();
+    useDoc.setState((st) => ({ doc: st.doc && { ...st.doc, signatureWarningAccepted: true } }));
+  }
   const snapshot: Snapshot = { label, bytes: s.doc.bytes, pageIds: s.doc.pageIds, annotations: s.annotations, formValues: s.formValues };
   await applyState({
     bytes: change.bytes ?? s.doc.bytes,

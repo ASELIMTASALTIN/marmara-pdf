@@ -88,6 +88,11 @@ export const browserPlatform: Platform = {
     return Promise.all((await pickFiles("image/png,image/jpeg", true)).map(toOpened));
   },
 
+  async pickFile({ extensions }) {
+    const [file] = await pickFiles(extensions.map((e) => `.${e}`).join(","), false);
+    return file ? toOpened(file) : null;
+  },
+
   async saveExport(bytes, { suggestedName }) {
     download(bytes, suggestedName, "application/octet-stream");
     return suggestedName;
