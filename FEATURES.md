@@ -54,8 +54,9 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 | Move text | ✅ | U |
 | Fallback re-typesetting when the font lacks glyphs (reported to user) | ✅ | U, UI |
 | Embedded subset fonts, rotated pages, TJ kerning | ✅ | U |
-| Text inside form XObjects / Type3 fonts | 🟡 shown as not editable | — |
-| Paragraph reflow across lines | ⬜ edits are line-based | — |
+| Paragraph editing with re-flow (wrap to column width, same leading, justification, first-line indent) | ✅ | U, UI |
+| Text inside form XObjects (copy-on-write per page) | ✅ | U |
+| Type3 fonts | ✅ | U |
 
 ## 5. Annotations
 | Feature | Status | Test |
@@ -76,6 +77,7 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 |---|---|---|
 | Detect scanned pages | ✅ | UI |
 | Run OCR (Turkish + English, offline), progress & cancel | ✅ | UI |
+| Automatic language: English pages re-read with the English model (no "İnvoice") | ✅ | UI |
 | Search recognised text | ✅ | UI |
 | Select / copy recognised text (aligned invisible layer) | ✅ | UI |
 | Edit recognised text (edit-text tool on OCR layer) | 🟡 edits the invisible layer | M |
@@ -86,7 +88,25 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 | Fill text, multi-line, checkbox, radio, dropdown/list | ✅ | U, UI |
 | Saved with regenerated appearances | ✅ | U, UI |
 
-## 8. File management
+## 8. Conversion
+| Feature | Status | Test |
+|---|---|---|
+| PDF → Word (.docx): paragraphs, fonts, bold/italic, alignment, images, page sizes | ✅ | U (opened in Word), UI |
+| PDF → images (PNG/JPEG, 72–300 DPI, page ranges) | ✅ | M |
+| PDF → plain text (UTF-8) | ✅ | U |
+| Images → PDF (A4-fitted or image-sized pages) | ✅ | U |
+
+## 9. Digital signatures
+| Feature | Status | Test |
+|---|---|---|
+| Create self-signed digital ID / import .pfx / export / remove | ✅ | U, UI |
+| Sign (PAdES, ETSI.CAdES.detached, SHA-256), visible or invisible, optional handwritten image | ✅ | U (OpenSSL-verified), UI |
+| Multiple signatures (incremental updates keep earlier ones valid) | ✅ | U |
+| Verify signatures: integrity, cryptographic validity, coverage, certificate; panel + banner | ✅ | U, UI |
+| Annotations / forms on signed files saved incrementally (signatures stay valid) | ✅ | U |
+| Certificate trust chain against a root store | ⬜ (reported as "identity not verified") | — |
+
+## 10. File management
 | Feature | Status | Test |
 |---|---|---|
 | Save / Save as | ✅ | UI |
@@ -96,7 +116,13 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 | Password-protected PDFs (open, edit, save keeps password) | ✅ | UI |
 | Corrupted / unsupported PDFs handled gracefully | ✅ | UI |
 
+## 11. Build & distribution
+| Feature | Status | Test |
+|---|---|---|
+| Code-signing hook (PFX, certificate store / EV token, Azure Trusted Signing) with timestamping | ✅ | M (test certificate) |
+
 ## Known limitations
-* Text edits are per line; no automatic paragraph reflow.
-* Digital (certificate) signatures are not implemented; signatures are visual.
-* PDF→Word / image conversion is not implemented.
+* Paragraph re-flow does not push down the content below a paragraph that grows.
+* Signature trust chains are not checked against a root store; self-signed IDs show "identity not verified".
+* The released installer is only free of SmartScreen warnings once signed with a CA or Azure Trusted Signing certificate (see docs/CODE_SIGNING.md).
+* PDF→Word does not reconstruct tables.

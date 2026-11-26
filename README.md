@@ -5,10 +5,11 @@ documents are never uploaded and nothing is downloaded at runtime.
 
 **Features:** fast virtualized viewer, search (Turkish-aware), page management
 (insert, delete, duplicate, rotate, reorder, extract, merge, split), real text
-editing in the PDF content stream, annotations (highlight, underline,
-strikethrough, drawing, shapes, text boxes, notes, signatures, images), form
-filling, OCR for scanned documents (Turkish + English), password-protected
-PDFs, crash recovery. See [FEATURES.md](FEATURES.md) and
+and paragraph editing in the PDF content stream, annotations (highlight,
+underline, strikethrough, drawing, shapes, text boxes, notes, signatures,
+images), form filling, OCR for scanned documents (Turkish + English),
+conversion (PDF → Word / images / text, images → PDF), certificate-based
+digital signatures with verification, password-protected PDFs, crash recovery. See [FEATURES.md](FEATURES.md) and
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 Built with Tauri 2 (Rust + WebView2), React, TypeScript, pdf.js, pdf-lib,
@@ -48,4 +49,6 @@ npm run tauri build
 
 Output: `src-tauri/target/release/bundle/nsis/Marmara PDF_<version>_x64-setup.exe`
 and `src-tauri/target/release/bundle/msi/…msi`. The installer registers
-Marmara PDF as an editor for `.pdf` files.
+Marmara PDF as an editor for `.pdf` files. To sign the installer (removes the
+SmartScreen warning with a trusted certificate), see
+[docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).

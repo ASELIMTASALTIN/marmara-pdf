@@ -46,7 +46,7 @@ export function Sidebar() {
       {tab === "pages" ? (
         <>
           <div className="sidebar-actions">
-            <span className="muted small">{selected.length > 1 ? `${selected.length} selected` : `${pageCount} pages`}</span>
+            <span className="muted small">{selected.length > 1 ? `${selected.length} selected` : `${pageCount} page${pageCount === 1 ? "" : "s"}`}</span>
             <div className="spacer" />
             <IconButton icon={RotateCw} label="Rotate selected right" size={15} onClick={() => rotate(90)} />
             <IconButton icon={FilePlus2} label="Insert blank page after" size={15} onClick={() => insertBlank(Math.max(...targetPages()) + 1)} />

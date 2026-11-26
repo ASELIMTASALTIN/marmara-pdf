@@ -113,7 +113,43 @@ async function formPdf() {
   return doc.save();
 }
 
+/** A page with a justified multi-line paragraph and a second paragraph (for re-flow tests). */
+async function paragraphPdf() {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.TimesRoman);
+  const bold = await doc.embedFont(StandardFonts.TimesRomanBold);
+  const p = doc.addPage([595.28, 841.89]);
+  p.drawText("Annual letter", { x: 72, y: 760, size: 20, font: bold });
+  const text =
+    "Marmara PDF edits whole paragraphs. When a sentence becomes longer, the following lines move down and the text is wrapped again to the original column width, using the same font and the same line spacing as before. Justified paragraphs stay justified.";
+  const W = 420;
+  const words = text.split(" ");
+  const lines = [];
+  let cur = [];
+  for (const w of words) {
+    const t = [...cur, w].join(" ");
+    if (font.widthOfTextAtSize(t, 12) > W && cur.length) {
+      lines.push(cur);
+      cur = [w];
+    } else cur.push(w);
+  }
+  lines.push(cur);
+  lines.forEach((ws, i) => {
+    const y = 720 - i * 16;
+    if (i === lines.length - 1) return p.drawText(ws.join(" "), { x: 72, y, size: 12, font });
+    const gap = (W - font.widthOfTextAtSize(ws.join(""), 12)) / (ws.length - 1);
+    let x = 72;
+    for (const w of ws) {
+      p.drawText(w, { x, y, size: 12, font });
+      x += font.widthOfTextAtSize(w, 12) + gap;
+    }
+  });
+  p.drawText("A second, separate paragraph further down the page.", { x: 72, y: 560, size: 12, font });
+  return doc.save();
+}
+
 const s = await sample();
+writeFileSync(join(out, "paragraph.pdf"), await paragraphPdf());
 writeFileSync(join(out, "form.pdf"), await formPdf());
 writeFileSync(join(out, "scanned.pdf"), await scanned());
 writeFileSync(join(out, "sample.pdf"), s);

@@ -28,7 +28,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
+    "targets": [
+      "nsis",
+      "msi"
+    ],
     "publisher": "Marmara PDF",
     "shortDescription": "Free, local PDF reader and editor",
     "longDescription": "Marmara PDF is a free, open-source PDF reader and editor. All document processing happens locally on your computer.",
@@ -36,7 +39,9 @@
     "category": "Productivity",
     "fileAssociations": [
       {
-        "ext": ["pdf"],
+        "ext": [
+          "pdf"
+        ],
         "name": "PDF Document",
         "description": "PDF Document",
         "mimeType": "application/pdf",
@@ -53,9 +58,24 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["English", "Turkish"],
+        "languages": [
+          "English",
+          "Turkish"
+        ],
         "displayLanguageSelector": true
-      }
+      },
+      "signCommand": {
+        "cmd": "powershell",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "../scripts/sign-windows.ps1",
+          "%1"
+        ]
+      },
+      "digestAlgorithm": "sha256"
     }
   }
 }
