@@ -23,6 +23,11 @@ import {
   Images,
   Share,
   Printer,
+  Minimize2,
+  ClipboardCheck,
+  Archive,
+  EyeOff,
+  Wrench,
   FileSignature,
   KeyRound,
   ShieldCheck,
@@ -73,6 +78,18 @@ function openExportMenu(e: React.MouseEvent) {
   ]);
 }
 
+function openToolsMenu(e: React.MouseEvent) {
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  showContextMenu({ clientX: r.left, clientY: r.bottom + 4 }, [
+    { label: "Reduce file size…", icon: Minimize2, onSelect: () => runCommand("tools.compress") },
+    { label: "Document check…", icon: ClipboardCheck, onSelect: () => runCommand("tools.check") },
+    { label: "Save as PDF/A…", icon: Archive, onSelect: () => runCommand("tools.pdfa") },
+    { kind: "separator" },
+    { label: "Find & redact…", icon: EyeOff, onSelect: () => runCommand("redact.find") },
+    { label: "Apply redactions…", icon: EyeOff, onSelect: () => runCommand("redact.apply") },
+  ]);
+}
+
 function openSignMenu(e: React.MouseEvent) {
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
   showContextMenu({ clientX: r.left, clientY: r.bottom + 4 }, [
@@ -103,6 +120,13 @@ export function TopBar() {
           <button type="button" className="menu-btn" onClick={openExportMenu} title="Export / convert">
             <Share size={16} strokeWidth={1.75} />
             <span>Export</span>
+            <ChevronDown size={14} />
+          </button>
+        )}
+        {doc && (
+          <button type="button" className="menu-btn" onClick={openToolsMenu} title="Tools">
+            <Wrench size={16} strokeWidth={1.75} />
+            <span>Tools</span>
             <ChevronDown size={14} />
           </button>
         )}

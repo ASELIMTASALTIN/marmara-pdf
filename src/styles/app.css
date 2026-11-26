@@ -2005,3 +2005,40 @@ textarea.form-input {
     object-fit: contain;
   }
 }
+
+/* --- document check ------------------------------------------------------------ */
+.check-report {
+  max-height: 52vh;
+  overflow-y: auto;
+}
+.check-report h3 {
+  margin: 12px 0 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+}
+.check-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.check-item svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.check-item.pass svg {
+  color: var(--success);
+}
+.check-item.warning svg {
+  color: var(--warning);
+}
+.check-item.error svg {
+  color: var(--danger);
+}
+.check-item.info svg {
+  color: var(--accent);
+}
