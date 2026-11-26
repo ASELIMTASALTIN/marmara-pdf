@@ -22,6 +22,7 @@ import {
   FileText,
   Images,
   Share,
+  Printer,
   FileSignature,
   KeyRound,
   ShieldCheck,
@@ -96,6 +97,7 @@ export function TopBar() {
         <IconButton icon={FolderOpen} label="Open" command="file.open" showLabel onClick={() => runCommand("file.open")} />
         <IconButton icon={Save} label="Save" command="file.save" disabled={!doc} onClick={() => runCommand("file.save")} />
         <IconButton icon={SaveAll} label="Save as" command="file.saveAs" disabled={!doc} onClick={() => runCommand("file.saveAs")} />
+        <IconButton icon={Printer} label="Print" command="file.print" disabled={!doc} onClick={() => runCommand("file.print")} />
         <IconButton icon={Combine} label="Combine files" command="file.combine" onClick={() => runCommand("file.combine")} />
         {doc && (
           <button type="button" className="menu-btn" onClick={openExportMenu} title="Export / convert">

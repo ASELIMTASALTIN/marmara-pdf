@@ -51,6 +51,12 @@ function writeOne(mupdf: MuPDF, doc: MDoc, page: MPage, ctm: Matrix, a: Annotati
       annot.setQuadPoints(a.rects.map((r) => rectToQuad(ctm, r)) as never);
       break;
     }
+    case "redact": {
+      // Unapplied redaction mark (standard Redact annotation); applying removes the content.
+      annot = page.createAnnotation("Redact");
+      annot.setQuadPoints(a.rects.map((r) => rectToQuad(ctm, r)) as never);
+      break;
+    }
     case "ink": {
       annot = page.createAnnotation("Ink");
       annot.setInkList(a.paths.map((path) => path.map(([x, y]) => p(x, y))) as never);

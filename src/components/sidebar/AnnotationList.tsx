@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import {
   Circle,
+  EyeOff,
   Highlighter,
   ImageIcon,
   Minus,
@@ -26,6 +27,7 @@ const ICONS: Record<Annotation["type"], LucideIcon> = {
   highlight: Highlighter,
   underline: Underline,
   strikeout: Strikethrough,
+  redact: EyeOff,
   ink: PenLine,
   rect: Square,
   ellipse: Circle,

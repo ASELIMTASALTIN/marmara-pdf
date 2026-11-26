@@ -19,7 +19,8 @@ export type Tool =
   | "image"
   | "eraser"
   | "edit-text"
-  | "digital-signature";
+  | "digital-signature"
+  | "redact";
 
 export type SidebarTab = "pages" | "annotations" | "signatures";
 
@@ -104,4 +105,4 @@ export function setTool(tool: Tool) {
 }
 
 export const MARKUP_TOOLS: Tool[] = ["highlight", "underline", "strikeout"];
-export const DRAW_TOOLS: Tool[] = ["ink", "rect", "ellipse", "line", "arrow", "freetext", "note", "signature", "image", "digital-signature"];
+export const DRAW_TOOLS: Tool[] = ["ink", "rect", "ellipse", "line", "arrow", "freetext", "note", "signature", "image", "digital-signature", "redact"];

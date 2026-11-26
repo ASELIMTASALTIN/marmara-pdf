@@ -9,6 +9,7 @@ export function moveAnnotation<T extends Annotation>(a: T, dx: number, dy: numbe
     case "highlight":
     case "underline":
     case "strikeout":
+    case "redact":
       return { ...a, rects: a.rects.map((r) => translateRect(r, dx, dy)) };
     case "ink":
       return { ...a, paths: a.paths.map((path) => path.map((p) => tp(p, dx, dy))) };

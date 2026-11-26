@@ -4,6 +4,7 @@ import {
   ChevronUp,
   Circle,
   Eraser,
+  EyeOff,
   Hand,
   Highlighter,
   ImagePlus,
@@ -63,6 +64,7 @@ const TOOL_GROUPS: ToolDef[][] = [
     { tool: "signature", icon: Signature, label: "Signature" },
     { tool: "image", icon: ImagePlus, label: "Image" },
     { tool: "eraser", icon: Eraser, label: "Eraser (remove annotations)", command: "tool.eraser" },
+    { tool: "redact", icon: EyeOff, label: "Redact (permanently remove content)" },
   ],
 ];
 

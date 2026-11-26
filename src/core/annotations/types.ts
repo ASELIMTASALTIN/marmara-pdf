@@ -26,6 +26,13 @@ export interface TextMarkupAnnotation extends Base {
   text: string;
 }
 
+/** Area marked for redaction; content under it is removed when redactions are applied. */
+export interface RedactAnnotation extends Base {
+  type: "redact";
+  rects: Rect[];
+  text?: string;
+}
+
 export interface InkAnnotation extends Base {
   type: "ink";
   width: number;
@@ -68,6 +75,7 @@ export interface ImageAnnotation extends Base {
 
 export type Annotation =
   | TextMarkupAnnotation
+  | RedactAnnotation
   | InkAnnotation
   | ShapeAnnotation
   | LineAnnotation
@@ -85,6 +93,7 @@ export function annotationBounds(a: Annotation): Rect {
     case "highlight":
     case "underline":
     case "strikeout":
+    case "redact":
       return a.rects.reduce<Rect>(
         (b, r) => [Math.min(b[0], r[0]), Math.min(b[1], r[1]), Math.max(b[2], r[2]), Math.max(b[3], r[3])],
         [Infinity, Infinity, -Infinity, -Infinity],

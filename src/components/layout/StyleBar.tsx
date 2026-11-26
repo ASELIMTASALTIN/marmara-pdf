@@ -2,7 +2,10 @@ import { Trash2 } from "lucide-react";
 import { useDoc } from "../../state/documentStore";
 import { useUi, type Tool } from "../../state/uiStore";
 import { annotationLabel, deleteAnnotation, updateAnnotation } from "../../actions/annotationActions";
-import type { Annotation } from "../../core/annotations/types";
+import type { Annotation, AnnotationMap } from "../../core/annotations/types";
+import { runCommand } from "../../actions/commands";
+
+const countMarks = (m: AnnotationMap) => Object.values(m).reduce((n, l) => n + l.filter((a) => a.type === "redact").reduce((k, a) => k + ("rects" in a ? a.rects.length : 0), 0), 0);
 
 const COLORS = ["#ffd400", "#ff8c00", "#d1242f", "#e83e8c", "#8250df", "#1f6feb", "#1a7f37", "#1f2328"];
 
@@ -21,6 +24,7 @@ const HINTS: Partial<Record<Tool, string>> = {
   image: "Click on the page to place the image",
   eraser: "Click or drag over annotations to remove them",
   "edit-text": "Click a line of text to edit it",
+  redact: "Drag over text or images to mark them for redaction",
 };
 
 const WIDTH_TYPES = new Set(["ink", "rect", "ellipse", "line", "arrow"]);
@@ -32,6 +36,7 @@ export function StyleBar() {
   const sel = useUi((s) => s.selectedAnnotation);
   const selected: Annotation | undefined = useDoc((s) => (sel ? s.annotations[sel.pageId]?.find((a) => a.id === sel.id) : undefined));
 
+  const redactCount = useDoc((s) => (tool === "redact" ? countMarks(s.annotations) : 0));
   const kind: string | null = selected ? selected.type : toolStyles[tool] ? tool : null;
   const hint = HINTS[tool];
   if (!kind && !hint) return null;
@@ -99,6 +104,16 @@ export function StyleBar() {
         <button className="btn sm" onClick={() => deleteAnnotation(sel.pageId, selected.id)}>
           <Trash2 size={13} /> Delete
         </button>
+      )}
+      {tool === "redact" && !selected && (
+        <>
+          <button className="btn sm" onClick={() => runCommand("redact.find")}>
+            Find &amp; mark…
+          </button>
+          <button className="btn sm danger" onClick={() => runCommand("redact.apply")}>
+            Apply redactions{redactCount ? ` (${redactCount})` : ""}
+          </button>
+        </>
       )}
       {!selected && hint && <span className="hint">{hint}</span>}
     </div>

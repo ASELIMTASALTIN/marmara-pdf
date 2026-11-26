@@ -7,6 +7,7 @@ const LABELS: Record<Annotation["type"], string> = {
   highlight: "highlight",
   underline: "underline",
   strikeout: "strikethrough",
+  redact: "redaction mark",
   ink: "drawing",
   rect: "rectangle",
   ellipse: "ellipse",
