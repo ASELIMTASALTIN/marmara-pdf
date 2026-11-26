@@ -10,7 +10,7 @@ export default defineConfig(() => ({
   plugins: [react()],
   // MuPDF (WASM) uses top-level await; WebView2 is evergreen Chromium.
   build: { target: "es2022", chunkSizeWarningLimit: 4000 },
-  optimizeDeps: { exclude: ["mupdf"] },
+  optimizeDeps: { exclude: ["mupdf"], include: ["tesseract.js", "pdf-lib", "@pdf-lib/fontkit"] },
   worker: { format: "es" as const },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

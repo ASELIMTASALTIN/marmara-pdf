@@ -142,6 +142,7 @@ export function Toasts() {
 
 export function BusyOverlay() {
   const busy = useDoc((s) => s.busy);
+  const cancel = useDoc((s) => s.busyCancel);
   const [visible, setVisible] = useState(false);
   // Only show for operations that take noticeable time.
   useEffect(() => {
@@ -158,6 +159,11 @@ export function BusyOverlay() {
       <div className="busy-card">
         <Loader2 size={20} className="spin" />
         <span>{busy}</span>
+        {cancel && (
+          <button className="btn sm" onClick={cancel}>
+            Cancel
+          </button>
+        )}
       </div>
     </div>
   );

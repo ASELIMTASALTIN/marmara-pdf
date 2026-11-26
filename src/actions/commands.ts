@@ -120,6 +120,7 @@ export const commands: Command[] = [
   { id: "page.extract", label: "Extract pages…", needsDoc: true, run: () => extract() },
   { id: "page.split", label: "Split document…", needsDoc: true, run: splitDialog },
 
+  { id: "ocr.run", label: "Recognise text (OCR)…", needsDoc: true, run: () => import("./ocrActions").then((m) => m.ocrDialog()) },
   { id: "tool.select", label: "Select", shortcut: "V", needsDoc: true, run: () => setTool("select") },
   { id: "tool.hand", label: "Hand", shortcut: "H", needsDoc: true, run: tool("hand") },
   { id: "tool.highlight", label: "Highlight", shortcut: "U", needsDoc: true, run: tool("highlight") },

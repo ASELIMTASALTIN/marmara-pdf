@@ -9,6 +9,9 @@
 export interface TextItemLike {
   str?: string;
   hasEOL?: boolean;
+  transform?: number[];
+  width?: number;
+  height?: number;
 }
 
 export interface PageText {
@@ -77,14 +80,26 @@ export function buildPageText(items: TextItemLike[], matchCase = false): PageTex
   let raw = "";
   const itemStarts: number[] = [];
   const itemLengths: number[] = [];
+  let prev: TextItemLike | null = null;
   for (const it of items) {
     if (typeof it.str !== "string") continue; // marked-content markers have no span
+    // Items on the same line separated by a visible gap are separate words.
+    if (prev && needsSeparator(prev, it) && raw && !/\s$/.test(raw) && !/^\s/.test(it.str)) raw += " ";
+    if (it.str) prev = it;
     itemStarts.push(raw.length);
     itemLengths.push(it.str.length);
     raw += it.str;
     if (it.hasEOL) raw += " ";
   }
   return { raw, folded: foldString(raw, matchCase), itemStarts, itemLengths };
+}
+
+function needsSeparator(a: TextItemLike, b: TextItemLike): boolean {
+  if (a.hasEOL || !a.transform || !b.transform || !b.str) return false;
+  const h = Math.max(Math.abs(a.height ?? 0), Math.abs(a.transform[3]), 1);
+  const sameLine = Math.abs(a.transform[5] - b.transform[5]) < h * 0.5;
+  const gap = b.transform[4] - (a.transform[4] + (a.width ?? 0));
+  return sameLine && gap > h * 0.15;
 }
 
 const isWordChar = (c: string | undefined) => !!c && /[\p{L}\p{N}_]/u.test(c);

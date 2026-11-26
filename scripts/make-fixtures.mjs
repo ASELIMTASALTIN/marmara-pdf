@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as mupdf from "mupdf";
+import fontkit from "@pdf-lib/fontkit";
+import { existsSync, readFileSync } from "node:fs";
 
 const out = join(dirname(fileURLToPath(import.meta.url)), "..", "test-fixtures");
 mkdirSync(out, { recursive: true });
@@ -58,7 +60,35 @@ function encrypted(bytes) {
   return buf.asUint8Array().slice();
 }
 
+/** A "scanned" PDF: pages are images only, no text layer. */
+async function scanned() {
+  // Source pages with Turkish text (Arial supports ğüşıöç), rendered to images.
+  const src = await PDFDocument.create();
+  src.registerFontkit(fontkit);
+  const arial = "C:/Windows/Fonts/arial.ttf";
+  const font = existsSync(arial) ? await src.embedFont(readFileSync(arial)) : await src.embedFont(StandardFonts.Helvetica);
+  const texts = [
+    ["Scanned Invoice 2026", "Customer: Marmara Shipping Ltd.", "Total amount due: 1,250.00 EUR", "Thank you for your business."],
+    ["Taranmış Belge", "Müşteri: Ahmet Yılmaz", "Ödeme tarihi: 15 Aralık 2026", "Şirketimiz İstanbul'dadır."],
+  ];
+  for (const lines of texts) {
+    const p = src.addPage([595.28, 841.89]);
+    lines.forEach((t, k) => p.drawText(t, { x: 60, y: 760 - k * 40, size: k ? 18 : 28, font }));
+  }
+  const srcBytes = await src.save();
+  const mdoc = mupdf.Document.openDocument(srcBytes, "application/pdf");
+  const out = await PDFDocument.create();
+  for (let i = 0; i < mdoc.countPages(); i++) {
+    const pix = mdoc.loadPage(i).toPixmap(mupdf.Matrix.scale(150 / 72, 150 / 72), mupdf.ColorSpace.DeviceGray, false, true);
+    const png = await out.embedPng(pix.asPNG());
+    const page = out.addPage([595.28, 841.89]);
+    page.drawImage(png, { x: 0, y: 0, width: 595.28, height: 841.89 });
+  }
+  return out.save();
+}
+
 const s = await sample();
+writeFileSync(join(out, "scanned.pdf"), await scanned());
 writeFileSync(join(out, "sample.pdf"), s);
 writeFileSync(join(out, "second.pdf"), await large(3));
 writeFileSync(join(out, "large-400.pdf"), await large(400));

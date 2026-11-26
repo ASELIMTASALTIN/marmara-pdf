@@ -90,7 +90,7 @@ function readContents(pageObj: PDFObject): Uint8Array {
   return out;
 }
 
-async function loadPage(doc: MDoc, pageIndex: number): Promise<LoadedPage> {
+export async function loadPage(doc: MDoc, pageIndex: number): Promise<LoadedPage> {
   const mupdf = await loadMupdf();
   const page = doc.loadPage(pageIndex) as MPage;
   const pageObj = page.getObject();
@@ -167,7 +167,7 @@ function builtinName(family: FontFamily, bold: boolean, italic: boolean): string
 }
 
 /** Adds a built-in Unicode font (embedded as a CID font) to the page resources. */
-async function addBuiltinFont(doc: MDoc, pageObj: PDFObject, fontName: string) {
+export async function addBuiltinFont(doc: MDoc, pageObj: PDFObject, fontName: string) {
   const mupdf = await loadMupdf();
   const font = new mupdf.Font(fontName);
   const ref = doc.addFont(font);
@@ -191,7 +191,7 @@ async function addBuiltinFont(doc: MDoc, pageObj: PDFObject, fontName: string) {
 }
 
 /** Encodes text for a MuPDF-embedded CID font (codes are glyph ids). */
-function encodeForBuiltin(font: import("mupdf").Font, text: string): Uint8Array {
+export function encodeForBuiltin(font: import("mupdf").Font, text: string): Uint8Array {
   const out: number[] = [];
   for (const ch of Array.from(text)) {
     const gid = font.encodeCharacter(ch.codePointAt(0)!);
@@ -201,13 +201,13 @@ function encodeForBuiltin(font: import("mupdf").Font, text: string): Uint8Array 
   return Uint8Array.from(out);
 }
 
-function writeContents(doc: MDoc, pageObj: PDFObject, ops: Operation[]) {
+export function writeContents(doc: MDoc, pageObj: PDFObject, ops: Operation[]) {
   const bytes = serializeContentStream(ops);
   const stream = doc.addStream(bytes, doc.newDictionary());
   pageObj.put("Contents", stream);
 }
 
-const op = (o: string, ...operands: PdfValue[]): Operation => ({ op: o, operands });
+export const op = (o: string, ...operands: PdfValue[]): Operation => ({ op: o, operands });
 
 /** Operators that keep the line movement of a text-showing operator without drawing anything. */
 function positioningOnly(run: TextRun, original: Operation): Operation[] {

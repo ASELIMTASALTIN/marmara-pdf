@@ -44,6 +44,8 @@ export interface DocState {
   redoStack: Snapshot[];
   /** Label of a running long operation, shown as a progress overlay. */
   busy: string | null;
+  /** Cancels the running long operation, when it supports cancelling. */
+  busyCancel: (() => void) | null;
 }
 
 const MAX_UNDO = 40;
@@ -58,6 +60,7 @@ export const useDoc = create<DocState>(() => ({
   undoStack: [],
   redoStack: [],
   busy: null,
+  busyCancel: null,
 }));
 
 // --- serialisation of mutations ---------------------------------------------
@@ -70,13 +73,18 @@ export function exclusive<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-export async function withBusy<T>(label: string, fn: () => Promise<T>): Promise<T> {
-  useDoc.setState({ busy: label });
+export async function withBusy<T>(label: string, fn: () => Promise<T>, cancel?: () => void): Promise<T> {
+  useDoc.setState({ busy: label, busyCancel: cancel ?? null });
   try {
     return await fn();
   } finally {
-    useDoc.setState({ busy: null });
+    useDoc.setState({ busy: null, busyCancel: null });
   }
+}
+
+/** Updates the progress label of the running long operation. */
+export function setBusyLabel(label: string) {
+  if (useDoc.getState().busy !== null) useDoc.setState({ busy: label });
 }
 
 // --- loading -----------------------------------------------------------------

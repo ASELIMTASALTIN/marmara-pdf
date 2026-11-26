@@ -15,6 +15,8 @@ const copies = [
   ["pdfjs-dist/iccs", "pdfjs/iccs"],
   ["tesseract.js/dist/worker.min.js", "tesseract/worker.min.js"],
   ["tesseract.js-core", "tesseract/core"],
+  ["@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz", "tesseract/lang/eng.traineddata.gz"],
+  ["@tesseract.js-data/tur/4.0.0_best_int/tur.traineddata.gz", "tesseract/lang/tur.traineddata.gz"],
 ];
 
 rmSync(out, { recursive: true, force: true });
