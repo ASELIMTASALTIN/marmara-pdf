@@ -71,15 +71,38 @@ pub fn read_file(path: String) -> Result<Response, String> {
         .map_err(|e| format!("{path}: {e}"))
 }
 
+/// File types that may be written by exports (PDF→Word/images/text).
+const EXPORT_EXTENSIONS: &[&str] = &["docx", "png", "jpg", "jpeg", "txt"];
+
 /// Body: raw file bytes. Header `x-path`: percent-encoded destination path.
+/// Header `x-kind`: "pdf" (default; content must be a PDF) or "export"
+/// (destination extension must be one of EXPORT_EXTENSIONS).
 #[tauri::command]
 pub fn write_file(request: Request<'_>) -> Result<(), String> {
     let path = header(&request, "x-path")?;
+    let kind = header(&request, "x-kind").unwrap_or_else(|_| "pdf".into());
     let data = raw_body(&request)?;
-    if data.len() < 5 || &data[..5] != b"%PDF-" {
-        return Err("refusing to write: data is not a PDF".into());
-    }
+    check_kind(&kind, Path::new(&path), data)?;
     atomic_write(Path::new(&path), data)
+}
+
+fn check_kind(kind: &str, path: &Path, data: &[u8]) -> Result<(), String> {
+    match kind {
+        "export" => {
+            let ext = path
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.to_ascii_lowercase())
+                .unwrap_or_default();
+            if EXPORT_EXTENSIONS.contains(&ext.as_str()) {
+                Ok(())
+            } else {
+                Err(format!("refusing to write: .{ext} is not an export format"))
+            }
+        }
+        _ if data.len() >= 5 && &data[..5] == b"%PDF-" => Ok(()),
+        _ => Err("refusing to write: data is not a PDF".into()),
+    }
 }
 
 #[tauri::command]
@@ -98,6 +121,16 @@ mod tests {
             "C:\\Belgeler\\Örnek şey.pdf"
         );
         assert_eq!(percent_decode("plain.pdf").unwrap(), "plain.pdf");
+    }
+
+    #[test]
+    fn checks_write_kinds() {
+        assert!(check_kind("pdf", Path::new("a.pdf"), b"%PDF-1.7").is_ok());
+        assert!(check_kind("pdf", Path::new("a.pdf"), b"hello").is_err());
+        assert!(check_kind("export", Path::new("C:/x/Report.DOCX"), b"PK").is_ok());
+        assert!(check_kind("export", Path::new("a.png"), b"x").is_ok());
+        assert!(check_kind("export", Path::new("evil.exe"), b"MZ").is_err());
+        assert!(check_kind("export", Path::new("noext"), b"x").is_err());
     }
 
     #[test]

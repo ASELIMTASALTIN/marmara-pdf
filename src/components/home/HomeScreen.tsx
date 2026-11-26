@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock, Combine, FileText, FolderOpen, History, ShieldCheck, Trash2, X } from "lucide-react";
+import { Clock, Combine, FileText, FolderOpen, History, Images, ShieldCheck, Trash2, X } from "lucide-react";
 import {
   discardRecovery,
   getRecentFiles,
@@ -49,6 +49,9 @@ export function HomeScreen() {
             </button>
             <button className="btn lg" onClick={pickAndMerge}>
               <Combine size={18} /> Combine files…
+            </button>
+            <button className="btn lg" onClick={() => import("../../actions/convertActions").then((m) => m.createPdfFromImages())}>
+              <Images size={18} /> PDF from images…
             </button>
           </div>
           <div className="drop-hint">or drop PDF files anywhere in this window</div>

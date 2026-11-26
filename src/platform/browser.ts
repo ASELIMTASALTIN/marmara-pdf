@@ -30,8 +30,8 @@ async function toOpened(file: File): Promise<OpenedFile> {
   return { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
 }
 
-function download(bytes: Uint8Array, name: string) {
-  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+function download(bytes: Uint8Array, name: string, type = "application/pdf") {
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type }));
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
@@ -82,6 +82,20 @@ export const browserPlatform: Platform = {
   async pickImage() {
     const [file] = await pickFiles("image/png,image/jpeg", false);
     return file ? toOpened(file) : null;
+  },
+
+  async pickImages() {
+    return Promise.all((await pickFiles("image/png,image/jpeg", true)).map(toOpened));
+  },
+
+  async saveExport(bytes, { suggestedName }) {
+    download(bytes, suggestedName, "application/octet-stream");
+    return suggestedName;
+  },
+
+  async saveManyExports(files) {
+    for (const f of files) download(f.bytes, f.name, "application/octet-stream");
+    return "Downloads";
   },
 
   startupFile: async () => null,

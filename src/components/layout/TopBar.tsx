@@ -17,6 +17,11 @@ import {
   Trash2,
   ChevronDown,
   LayoutGrid,
+  FileType2,
+  FileImage,
+  FileText,
+  Images,
+  Share,
 } from "lucide-react";
 import { useDoc } from "../../state/documentStore";
 import { useSearch } from "../../state/searchStore";
@@ -53,6 +58,17 @@ function openPagesMenu(e: React.MouseEvent) {
   ]);
 }
 
+function openExportMenu(e: React.MouseEvent) {
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  showContextMenu({ clientX: r.left, clientY: r.bottom + 4 }, [
+    { label: "Word document (.docx)…", icon: FileType2, onSelect: () => runCommand("export.word") },
+    { label: "Images (PNG / JPEG)…", icon: FileImage, onSelect: () => runCommand("export.images") },
+    { label: "Plain text (.txt)…", icon: FileText, onSelect: () => runCommand("export.text") },
+    { kind: "separator" },
+    { label: "Create PDF from images…", icon: Images, onSelect: () => runCommand("file.fromImages") },
+  ]);
+}
+
 export function TopBar() {
   const doc = useDoc((s) => s.doc);
   const dirty = useDoc((s) => s.dirty);
@@ -68,6 +84,13 @@ export function TopBar() {
         <IconButton icon={Save} label="Save" command="file.save" disabled={!doc} onClick={() => runCommand("file.save")} />
         <IconButton icon={SaveAll} label="Save as" command="file.saveAs" disabled={!doc} onClick={() => runCommand("file.saveAs")} />
         <IconButton icon={Combine} label="Combine files" command="file.combine" onClick={() => runCommand("file.combine")} />
+        {doc && (
+          <button type="button" className="menu-btn" onClick={openExportMenu} title="Export / convert">
+            <Share size={16} strokeWidth={1.75} />
+            <span>Export</span>
+            <ChevronDown size={14} />
+          </button>
+        )}
         {doc && (
           <button type="button" className="menu-btn" onClick={openPagesMenu} title="Page tools">
             <LayoutGrid size={16} strokeWidth={1.75} />

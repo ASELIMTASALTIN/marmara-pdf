@@ -34,6 +34,11 @@ export interface Platform {
   /** Writes several files into a user-chosen folder. Returns the folder or null if cancelled. */
   saveManyPdfs(files: { name: string; bytes: Uint8Array }[], title: string): Promise<string | null>;
   pickImage(): Promise<OpenedFile | null>;
+  pickImages(): Promise<OpenedFile[]>;
+  /** Saves a non-PDF export (docx, png, jpg, txt). Returns the path/name or null if cancelled. */
+  saveExport(bytes: Uint8Array, opts: { suggestedName: string; filterName: string; extensions: string[] }): Promise<string | null>;
+  /** Writes several export files into a user-chosen folder. */
+  saveManyExports(files: { name: string; bytes: Uint8Array }[], title: string): Promise<string | null>;
   startupFile(): Promise<string | null>;
   fileExists(path: string): Promise<boolean>;
   setFullscreen(on: boolean): Promise<void>;

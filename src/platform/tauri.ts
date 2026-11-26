@@ -12,9 +12,11 @@ async function readPath(path: string): Promise<OpenedFile> {
   return { name: baseName(path), path, bytes: new Uint8Array(buf) };
 }
 
-async function writePath(path: string, bytes: Uint8Array): Promise<void> {
-  await invoke("write_file", bytes, { headers: { "x-path": encodeURIComponent(path) } });
+async function writePath(path: string, bytes: Uint8Array, kind: "pdf" | "export" = "pdf"): Promise<void> {
+  await invoke("write_file", bytes, { headers: { "x-path": encodeURIComponent(path), "x-kind": kind } });
 }
+
+const IMAGE_FILTER = [{ name: "Images", extensions: ["png", "jpg", "jpeg"] }];
 
 export const tauriPlatform: Platform = {
   isDesktop: true,
@@ -55,6 +57,30 @@ export const tauriPlatform: Platform = {
     if (!picked || Array.isArray(picked)) return null;
     const buf = await invoke<ArrayBuffer>("read_file", { path: picked });
     return { name: baseName(picked), path: picked, bytes: new Uint8Array(buf) };
+  },
+
+  async pickImages() {
+    const picked = await open({ multiple: true, title: "Choose images", filters: IMAGE_FILTER });
+    if (!picked) return [];
+    const paths = Array.isArray(picked) ? picked : [picked];
+    return Promise.all(
+      paths.map(async (p) => ({ name: baseName(p), path: p, bytes: new Uint8Array(await invoke<ArrayBuffer>("read_file", { path: p })) })),
+    );
+  },
+
+  async saveExport(bytes, { suggestedName, filterName, extensions }) {
+    let target = await save({ defaultPath: suggestedName, filters: [{ name: filterName, extensions }], title: "Export" });
+    if (!target) return null;
+    if (!extensions.some((e) => target!.toLowerCase().endsWith(`.${e}`))) target += `.${extensions[0]}`;
+    await writePath(target, bytes, "export");
+    return target;
+  },
+
+  async saveManyExports(files, title) {
+    const dir = await open({ directory: true, title });
+    if (!dir || Array.isArray(dir)) return null;
+    for (const f of files) await writePath(await join(dir, f.name), f.bytes, "export");
+    return dir;
   },
 
   startupFile: () => invoke<string | null>("startup_file"),

@@ -69,6 +69,10 @@ export const commands: Command[] = [
   { id: "file.saveAs", label: "Save as…", shortcut: "Ctrl+Shift+S", needsDoc: true, run: () => saveDocument(true) },
   { id: "file.close", label: "Close document", shortcut: "Ctrl+W", needsDoc: true, run: closeDocument },
   { id: "file.combine", label: "Combine files…", run: pickAndMerge },
+  { id: "file.fromImages", label: "Create PDF from images…", run: () => import("./convertActions").then((m) => m.createPdfFromImages()) },
+  { id: "export.word", label: "Export to Word (.docx)…", needsDoc: true, run: () => import("./convertActions").then((m) => m.exportToWord()) },
+  { id: "export.images", label: "Export pages as images…", needsDoc: true, run: () => import("./convertActions").then((m) => m.exportToImages()) },
+  { id: "export.text", label: "Export as plain text…", needsDoc: true, run: () => import("./convertActions").then((m) => m.exportToText()) },
 
   {
     id: "edit.undo",
