@@ -1,0 +1,67 @@
+// Generates PDFs used for manual and automated testing into test-fixtures/.
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
+import * as mupdf from "mupdf";
+
+const out = join(dirname(fileURLToPath(import.meta.url)), "..", "test-fixtures");
+mkdirSync(out, { recursive: true });
+
+async function sample() {
+  const doc = await PDFDocument.create();
+  doc.setTitle("Marmara sample");
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const sizes = [
+    [595.28, 841.89],
+    [595.28, 841.89],
+    [841.89, 595.28],
+    [612, 792],
+    [595.28, 841.89],
+  ];
+  sizes.forEach(([w, h], i) => {
+    const p = doc.addPage([w, h]);
+    p.drawRectangle({ x: 0, y: h - 70, width: w, height: 70, color: rgb(0.08, 0.4, 0.77) });
+    p.drawText(`Page ${i + 1} - Marmara PDF test document`, { x: 40, y: h - 45, size: 20, font: bold, color: rgb(1, 1, 1) });
+    const lines = [
+      "The quick brown fox jumps over the lazy dog.",
+      "Searching should find the word lighthouse on several pages.",
+      `This page is number ${i + 1} and has a unique token TOKEN${i + 1}.`,
+      "Istanbul and the Bosphorus connect two continents.",
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    ];
+    lines.forEach((t, k) => p.drawText(t, { x: 40, y: h - 120 - k * 24, size: 13, font, color: rgb(0.1, 0.1, 0.12) }));
+    if (i % 2 === 0) p.drawText("lighthouse", { x: 40, y: 80, size: 16, font: bold, color: rgb(0.7, 0.1, 0.1) });
+    p.drawCircle({ x: w - 90, y: 120, size: 40, color: rgb(0.95, 0.75, 0.1), opacity: 0.8 });
+  });
+  doc.getPage(3).setRotation(degrees(90));
+  return doc.save();
+}
+
+async function large(n) {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.TimesRoman);
+  for (let i = 0; i < n; i++) {
+    const p = doc.addPage([595.28, 841.89]);
+    p.drawText(`Large document page ${i + 1} of ${n}`, { x: 50, y: 780, size: 22, font });
+    for (let k = 0; k < 30; k++)
+      p.drawText(`Line ${k + 1}: content for performance testing, page ${i + 1}.`, { x: 50, y: 740 - k * 22, size: 11, font });
+  }
+  return doc.save();
+}
+
+function encrypted(bytes) {
+  const doc = mupdf.Document.openDocument(bytes, "application/pdf");
+  const buf = doc.asPDF().saveToBuffer("encrypt=aes-256,user-password=secret,owner-password=owner");
+  return buf.asUint8Array().slice();
+}
+
+const s = await sample();
+writeFileSync(join(out, "sample.pdf"), s);
+writeFileSync(join(out, "second.pdf"), await large(3));
+writeFileSync(join(out, "large-400.pdf"), await large(400));
+writeFileSync(join(out, "protected.pdf"), encrypted(s));
+writeFileSync(join(out, "corrupt.pdf"), Buffer.from("%PDF-1.7\n1 0 obj << /Type /Catalog >>\ngarbage garbage"));
+console.log("fixtures written to", out);
