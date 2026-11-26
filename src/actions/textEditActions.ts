@@ -94,7 +94,7 @@ export function commitEdit(): Promise<void> {
       if (r.mode === "in-place") toast(`Text edited in its original font (${r.font})`, "success");
       else if (r.mode === "reflowed")
         toast(
-          r.font === a.block.fontName
+          !r.substituted
             ? `Paragraph re-flowed in its original font (${r.font})`
             : `Paragraph re-flowed with ${r.font}${a.family !== "original" && a.family !== a.block.family ? "" : " because the original font does not contain every character"}`,
           "success",

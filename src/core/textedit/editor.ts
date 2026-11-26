@@ -70,6 +70,8 @@ export interface EditResult {
   bytes: Uint8Array;
   mode: "in-place" | "retypeset" | "reflowed" | "deleted";
   font: string;
+  /** True when a built-in font replaced the original one (missing glyphs or family change). */
+  substituted: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -400,6 +402,7 @@ class StreamEditor {
 interface Setter {
   key: string;
   name: string;
+  substituted: boolean;
   /** Encodes a piece of text into show-operator items. */
   encode(text: string): PdfValue[];
   /** Advance of text in text-space units for font size `tfs` (Tc = 0, Tz applied by caller). */
@@ -417,6 +420,7 @@ async function chooseSetter(doc: MDoc, lp: LoadedPage, run: TextRun, text: strin
       return {
         key,
         name: cleanName(font.baseFont),
+        substituted: false,
         encode: (t) => {
           const shown = showOp(font, encodeText(font, t)!);
           return shown.op === "TJ" ? (shown.operands[0] as { v: PdfValue[] }).v : shown.operands;
@@ -438,6 +442,7 @@ async function chooseSetter(doc: MDoc, lp: LoadedPage, run: TextRun, text: strin
   return {
     key: added.key,
     name: added.font.getName(),
+    substituted: true,
     encode: (t) => [str(encodeForBuiltin(added.font, t))],
     measure: (t, tfs) =>
       Array.from(t).reduce((w, ch) => w + added.font.advanceGlyph(Math.max(0, added.font.encodeCharacter(ch.codePointAt(0)!))) * tfs, 0),
@@ -509,9 +514,9 @@ export async function applyTextEdit(bytes: Uint8Array, pageIndex: number, edit: 
 
     const se = new StreamEditor(doc, lp);
     const allRuns = para.lines.flatMap((l) => l.runs);
-    const save = (mode: EditResult["mode"], fontName: string): EditResult => {
+    const save = (mode: EditResult["mode"], fontName: string, substituted = false): EditResult => {
       se.commit();
-      return { bytes: saveMupdf(doc, "compress"), mode, font: fontName };
+      return { bytes: saveMupdf(doc, "compress"), mode, font: fontName, substituted };
     };
 
     // Delete.
@@ -575,7 +580,7 @@ export async function applyTextEdit(bytes: Uint8Array, pageIndex: number, edit: 
 
     if (!multi) {
       se.append([...head, op("TJ", { t: "arr", v: setter.encode(newText) }), op("ET"), op("Q")]);
-      return save("retypeset", setter.name);
+      return save("retypeset", setter.name, setter.substituted);
     }
 
     // --- paragraph re-flow ---
@@ -611,7 +616,7 @@ export async function applyTextEdit(bytes: Uint8Array, pageIndex: number, edit: 
       body.push(op("TJ", { t: "arr", v: items }));
     });
     se.append([...head, ...body, op("ET"), op("Q")]);
-    return save("reflowed", setter.name);
+    return save("reflowed", setter.name, setter.substituted);
   } finally {
     doc.destroy();
   }

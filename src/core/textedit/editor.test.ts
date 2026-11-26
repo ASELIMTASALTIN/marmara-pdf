@@ -88,6 +88,7 @@ describe("text editing", () => {
     const fox = (await analyzePageText(bytes, 0)).find((b) => b.text.startsWith("The quick"))!;
     const r = await applyTextEdit(bytes, 0, { blockId: fox.id, text: "Hızlı kahverengi tilki — ğüşıöçİ" });
     expect(r.mode).toBe("retypeset");
+    expect(r.substituted).toBe(true);
     const t = pageText(r.bytes);
     expect(t).toContain("Hızlı kahverengi tilki — ğüşıöçİ");
     expect(t).not.toContain("quick brown");
@@ -219,6 +220,7 @@ describe("text editing", () => {
     const r = await applyTextEdit(bytes, 0, { blockId: para.id, text: longer });
     expect(r.mode).toBe("reflowed");
     expect(r.font).toMatch(/Times/);
+    expect(r.substituted).toBe(false);
     const after = (await analyzePageText(r.bytes, 0)).find((b) => b.text.startsWith("Marmara PDF edits"))!;
     expect(after.lines).toBeGreaterThan(4);
     expect(after.text).toBe(longer);
