@@ -5,6 +5,7 @@ import {
   Circle,
   Eraser,
   EyeOff,
+  FormInput,
   Hand,
   Highlighter,
   ImagePlus,
@@ -65,6 +66,7 @@ const TOOL_GROUPS: ToolDef[][] = [
     { tool: "image", icon: ImagePlus, label: "Image" },
     { tool: "eraser", icon: Eraser, label: "Eraser (remove annotations)", command: "tool.eraser" },
     { tool: "redact", icon: EyeOff, label: "Redact (permanently remove content)" },
+    { tool: "form", icon: FormInput, label: "Prepare form (add fields)" },
   ],
 ];
 

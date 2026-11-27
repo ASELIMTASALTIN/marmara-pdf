@@ -3,6 +3,8 @@ import type { PDFPageProxy, PageViewport } from "../../core/pdf/pdfjs";
 import { normRect, rectToView } from "../../core/annotations/geometry";
 import type { Rect } from "../../core/annotations/types";
 import { commit, exclusive, useDoc } from "../../state/documentStore";
+import { useUi } from "../../state/uiStore";
+import { X } from "lucide-react";
 
 /** Subset of pdf.js widget annotation data used for form filling. */
 interface WidgetData {
@@ -66,6 +68,7 @@ function TextField({ w, value, style }: { w: WidgetData; value: string; style: R
 export const FormLayer = memo(function FormLayer({ page, viewport: vp }: { page: PDFPageProxy; viewport: PageViewport }) {
   const [widgets, setWidgets] = useState<WidgetData[]>([]);
   const values = useDoc((s) => s.formValues);
+  const preparing = useUi((s) => s.tool === "form");
 
   useEffect(() => {
     let alive = true;
@@ -74,9 +77,7 @@ export const FormLayer = memo(function FormLayer({ page, viewport: vp }: { page:
       .then((anns) => {
         if (!alive) return;
         setWidgets(
-          (anns as WidgetData[]).filter(
-            (a) => a.subtype === "Widget" && (a.fieldType === "Tx" || a.fieldType === "Btn" || a.fieldType === "Ch") && !a.pushButton && !a.hidden,
-          ),
+          (anns as WidgetData[]).filter((a) => a.subtype === "Widget" && !!a.fieldType && !a.hidden),
         );
       })
       .catch(() => alive && setWidgets([]));
@@ -86,6 +87,29 @@ export const FormLayer = memo(function FormLayer({ page, viewport: vp }: { page:
   }, [page]);
 
   if (!widgets.length) return null;
+
+  if (preparing) {
+    return (
+      <div className="form-layer preparing">
+        {widgets.map((w) => {
+          const b = rectToView(vp, normRect(w.rect));
+          return (
+            <div key={w.id} className="form-prep" style={{ left: b.x, top: b.y, width: b.w, height: b.h }} title={`${w.fieldName} (${w.fieldType})`}>
+              <span className="form-prep-name">{w.fieldName}</span>
+              <button
+                className="form-prep-del"
+                title={`Delete field “${w.fieldName}”`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => void import("../../actions/formActions").then((m) => m.removeFieldAction(w.fieldName))}
+              >
+                <X size={11} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="form-layer">
@@ -102,6 +126,7 @@ export const FormLayer = memo(function FormLayer({ page, viewport: vp }: { page:
           textAlign: w.textAlignment === 1 ? "center" : w.textAlignment === 2 ? "right" : "left",
         };
 
+        if (w.fieldType === "Sig" || w.pushButton) return null;
         if (w.fieldType === "Tx") {
           const v = typeof stored === "string" ? stored : typeof w.fieldValue === "string" ? w.fieldValue : "";
           return <TextField key={w.id} w={w} value={v} style={textStyle} />;

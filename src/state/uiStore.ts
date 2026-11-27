@@ -20,7 +20,8 @@ export type Tool =
   | "eraser"
   | "edit-text"
   | "digital-signature"
-  | "redact";
+  | "redact"
+  | "form";
 
 export type SidebarTab = "pages" | "annotations" | "signatures" | "bookmarks";
 
@@ -51,6 +52,8 @@ export interface UiState {
   pendingImage: { dataUrl: string; width: number; height: number; kind: "signature" | "image" } | null;
   /** Annotation whose text is being edited inline. */
   editingAnnotation: string | null;
+  /** Field type created by the Prepare-form tool. */
+  formFieldKind: import("../core/forms/create").FieldKind;
 }
 
 export const MIN_ZOOM = 0.1;
@@ -85,6 +88,7 @@ export const useUi = create<UiState>(() => ({
   dropHover: false,
   pendingImage: null,
   editingAnnotation: null,
+  formFieldKind: "text",
 }));
 
 export function clampZoom(z: number): number {
@@ -105,4 +109,4 @@ export function setTool(tool: Tool) {
 }
 
 export const MARKUP_TOOLS: Tool[] = ["highlight", "underline", "strikeout"];
-export const DRAW_TOOLS: Tool[] = ["ink", "rect", "ellipse", "line", "arrow", "freetext", "note", "signature", "image", "digital-signature", "redact"];
+export const DRAW_TOOLS: Tool[] = ["ink", "rect", "ellipse", "line", "arrow", "freetext", "note", "signature", "image", "digital-signature", "redact", "form"];

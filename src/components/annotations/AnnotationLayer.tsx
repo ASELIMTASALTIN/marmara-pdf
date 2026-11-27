@@ -480,6 +480,11 @@ export const AnnotationLayer = memo(function AnnotationLayer({ viewport: vp, pag
       return;
     }
     if (Math.hypot(d.x1 - d.x0, d.y1 - d.y0) < 4) return;
+    if (d.tool === "form") {
+      const rect = viewRectToPdf(vp, d.x0, d.y0, d.x1, d.y1);
+      void import("../../actions/formActions").then((m) => m.createFieldFlow(pageIndex, rect));
+      return;
+    }
     if (d.tool === "redact") {
       void addAnnotation(pageId, { type: "redact", rects: [viewRectToPdf(vp, d.x0, d.y0, d.x1, d.y1)], color: "#d1242f", opacity: 1 });
       return;
@@ -576,7 +581,11 @@ export const AnnotationLayer = memo(function AnnotationLayer({ viewport: vp, pag
     } else {
       const { x0, y0, x1, y1 } = draft;
       const w = Math.max(0.75, st.width * vp.scale);
-      if (draft.tool === "redact")
+      if (draft.tool === "form")
+        draftEl = (
+          <rect x={Math.min(x0, x1)} y={Math.min(y0, y1)} width={Math.abs(x1 - x0)} height={Math.abs(y1 - y0)} stroke="#1366c4" strokeWidth={1.5} strokeDasharray="4 3" fill="rgba(19,102,196,0.10)" />
+        );
+      else if (draft.tool === "redact")
         draftEl = (
           <rect x={Math.min(x0, x1)} y={Math.min(y0, y1)} width={Math.abs(x1 - x0)} height={Math.abs(y1 - y0)} stroke="#d1242f" strokeWidth={1.5} strokeDasharray="5 3" fill="rgba(209,36,47,0.18)" />
         );

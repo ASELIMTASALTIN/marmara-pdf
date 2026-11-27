@@ -2170,3 +2170,46 @@ textarea.form-input {
 .doc-tab-new {
   margin: 0 0 4px 4px;
 }
+
+/* --- prepare form --------------------------------------------------------------- */
+.form-layer.preparing {
+  z-index: 4;
+}
+.form-layer.preparing > .form-prep {
+  pointer-events: auto;
+}
+.form-prep {
+  border: 1.5px dashed var(--accent);
+  background: rgb(19 102 196 / 0.08);
+  border-radius: 2px;
+}
+.form-prep-name {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  padding: 0 4px;
+  font-size: 10px;
+  line-height: 14px;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+  white-space: nowrap;
+}
+.form-prep-del {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  opacity: 0;
+}
+.form-prep:hover .form-prep-del {
+  opacity: 1;
+}
