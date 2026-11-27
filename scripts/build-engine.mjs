@@ -42,6 +42,25 @@ mkdirSync(out, { recursive: true });
 copyFileSync(join(bin, "llama-server.exe"), join(out, "llama-server.exe"));
 for (const f of readdirSync(bin)) if (f.endsWith(".dll")) copyFileSync(join(bin, f), join(out, f));
 copyFileSync(join(src, "LICENSE"), join(out, "LLAMA-CPP-LICENSE.txt"));
+
+// The engine uses the Visual C++ runtime (MSVCP140, VCRUNTIME140…), which a clean Windows
+// install may lack: ship it app-local (allowed by the Visual Studio redistribution terms).
+const redistRoot = join(process.env["ProgramFiles"] ?? "C:\\Program Files", "Microsoft Visual Studio", "2022");
+let crt = null;
+for (const edition of existsSync(redistRoot) ? readdirSync(redistRoot) : []) {
+  const msvc = join(redistRoot, edition, "VC", "Redist", "MSVC");
+  if (!existsSync(msvc)) continue;
+  for (const v of readdirSync(msvc).filter((d) => /^\d/.test(d)).sort().reverse()) {
+    const dir = join(msvc, v, "x64", "Microsoft.VC143.CRT");
+    if (existsSync(join(dir, "msvcp140.dll"))) {
+      crt = dir;
+      break;
+    }
+  }
+  if (crt) break;
+}
+if (!crt) throw new Error("Visual C++ redistributable DLLs (Microsoft.VC143.CRT) not found in the Visual Studio installation.");
+for (const f of readdirSync(crt)) if (/\.dll$/i.test(f)) copyFileSync(join(crt, f), join(out, f));
 writeFileSync(join(out, "VERSION.txt"), `llama.cpp ${tag} (Vulkan ${vulkan ? "on" : "off"}, all CPU variants, backend DLLs)\r\n`);
 const files = readdirSync(out);
 const mb = files.reduce((n, f) => n + statSync(join(out, f)).size, 0) / 1048576;

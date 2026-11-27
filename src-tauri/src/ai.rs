@@ -287,7 +287,9 @@ pub fn ai_start(app: AppHandle, state: State<AiState>, model: Option<String>, gp
         .arg("--model").arg(&model_path)
         .args(["--host", "127.0.0.1", "--port", &port.to_string(), "--api-key", &key])
         .args(["--ctx-size", &context.unwrap_or(8192).to_string(), "--parallel", "1"])
-        .args(["--n-gpu-layers", if gpu { "99" } else { "0" }])
+        // "auto" lets llama.cpp fit as many layers as the free video memory allows (the rest
+        // runs on the CPU), so small GPUs work too; 0 = CPU only.
+        .args(["--n-gpu-layers", if gpu { "auto" } else { "0" }])
         // This model answers best when it may think first (llama.cpp returns the thoughts separately).
         .args(["--jinja", "--no-webui", "--reasoning-budget", "1024"])
         .stdin(Stdio::null())
