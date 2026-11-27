@@ -22,7 +22,7 @@ export type Tool =
   | "digital-signature"
   | "redact";
 
-export type SidebarTab = "pages" | "annotations" | "signatures";
+export type SidebarTab = "pages" | "annotations" | "signatures" | "bookmarks";
 
 export interface ToolStyle {
   color: string;

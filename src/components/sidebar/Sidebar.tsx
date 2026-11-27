@@ -1,4 +1,5 @@
-import { FilePlus2, FileStack, Layers, MessageSquareText, RotateCw, ShieldCheck, Trash2 } from "lucide-react";
+import { Bookmark, FilePlus2, FileStack, Layers, MessageSquareText, RotateCw, ShieldCheck, Trash2 } from "lucide-react";
+import { BookmarksPanel } from "./BookmarksPanel";
 import { SignaturePanel } from "../signatures/SignaturePanel";
 import { useSignatures } from "../../actions/signatureActions";
 import { useUi } from "../../state/uiStore";
@@ -34,6 +35,16 @@ export function Sidebar() {
         </button>
         <button
           role="tab"
+          aria-selected={tab === "bookmarks"}
+          aria-label="Bookmarks"
+          title="Bookmarks"
+          className={tab === "bookmarks" ? "active" : ""}
+          onClick={() => useUi.setState({ sidebarTab: "bookmarks" })}
+        >
+          <Bookmark size={15} />
+        </button>
+        <button
+          role="tab"
           aria-selected={tab === "signatures"}
           title="Signatures"
           aria-label="Signatures"
@@ -57,6 +68,8 @@ export function Sidebar() {
         </>
       ) : tab === "annotations" ? (
         <AnnotationList />
+      ) : tab === "bookmarks" ? (
+        <BookmarksPanel />
       ) : (
         <SignaturePanel />
       )}
