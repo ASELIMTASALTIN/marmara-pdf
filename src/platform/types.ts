@@ -39,6 +39,10 @@ export interface Platform {
   pickFile(opts: { title: string; filterName: string; extensions: string[] }): Promise<OpenedFile | null>;
   /** Saves a non-PDF export (docx, png, jpg, txt). Returns the path/name or null if cancelled. */
   saveExport(bytes: Uint8Array, opts: { suggestedName: string; filterName: string; extensions: string[] }): Promise<string | null>;
+  /** Lets the user choose a folder (desktop) — browsers return a placeholder and download files instead. */
+  pickDirectory(title: string): Promise<string | null>;
+  /** Writes one file into a folder chosen with pickDirectory. */
+  writeInDirectory(dir: string, name: string, bytes: Uint8Array, kind: "pdf" | "export"): Promise<void>;
   /** Writes several export files into a user-chosen folder. */
   saveManyExports(files: { name: string; bytes: Uint8Array }[], title: string): Promise<string | null>;
   startupFile(): Promise<string | null>;

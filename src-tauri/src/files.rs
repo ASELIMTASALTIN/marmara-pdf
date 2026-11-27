@@ -72,7 +72,7 @@ pub fn read_file(path: String) -> Result<Response, String> {
 }
 
 /// File types that may be written by exports (PDF→Word/images/text).
-const EXPORT_EXTENSIONS: &[&str] = &["docx", "png", "jpg", "jpeg", "txt", "pfx", "p12", "cer"];
+const EXPORT_EXTENSIONS: &[&str] = &["docx", "png", "jpg", "jpeg", "txt", "pfx", "p12", "cer", "xfdf"];
 
 /// Body: raw file bytes. Header `x-path`: percent-encoded destination path.
 /// Header `x-kind`: "pdf" (default; content must be a PDF) or "export"

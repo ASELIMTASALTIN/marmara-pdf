@@ -80,6 +80,31 @@ async function renderForOcr(pdf: PDFDocumentProxy, index: number) {
   return { canvas, viewport };
 }
 
+/**
+ * OCR for batch processing: recognises the pages without text in `bytes` and
+ * returns the PDF with an invisible text layer (or the input if nothing to do).
+ */
+export async function ocrPdfBytes(bytes: Uint8Array, lang: OcrLanguage, isCancelled: () => boolean): Promise<{ bytes: Uint8Array; pages: number }> {
+  const { openPdf } = await import("../core/pdf/pdfjs");
+  const { recognizeAuto } = await import("../core/ocr/recognize");
+  const { addOcrTextLayers } = await import("../core/ocr/textLayer");
+  const pdf = await openPdf(bytes);
+  try {
+    const results: { pageIndex: number; lines: OcrLineGeom[] }[] = [];
+    for (let i = 0; i < pdf.numPages && !isCancelled(); i++) {
+      if (!needsOcr(await pageTextStatus(pdf, i))) continue;
+      const { canvas, viewport } = await renderForOcr(pdf, i);
+      const { lines } = await recognizeAuto(canvas, lang);
+      canvas.width = canvas.height = 0;
+      results.push({ pageIndex: i, lines: toGeometry(lines, viewport) });
+    }
+    if (!results.length || isCancelled()) return { bytes, pages: 0 };
+    return { bytes: await addOcrTextLayers(bytes, results), pages: results.length };
+  } finally {
+    void pdf.loadingTask.destroy();
+  }
+}
+
 export async function runOcr(pages: number[], lang: OcrLanguage): Promise<void> {
   if (!pages.length) return;
   let cancelled = false;

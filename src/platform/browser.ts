@@ -98,6 +98,14 @@ export const browserPlatform: Platform = {
     return suggestedName;
   },
 
+  async pickDirectory() {
+    return "Downloads";
+  },
+
+  async writeInDirectory(_dir, name, bytes, kind) {
+    download(bytes, name, kind === "pdf" ? "application/pdf" : "application/octet-stream");
+  },
+
   async saveManyExports(files) {
     for (const f of files) download(f.bytes, f.name, "application/octet-stream");
     return "Downloads";

@@ -82,6 +82,15 @@ export const tauriPlatform: Platform = {
     return target;
   },
 
+  async pickDirectory(title) {
+    const dir = await open({ directory: true, title });
+    return !dir || Array.isArray(dir) ? null : dir;
+  },
+
+  async writeInDirectory(dir, name, bytes, kind) {
+    await writePath(await join(dir, name), bytes, kind);
+  },
+
   async saveManyExports(files, title) {
     const dir = await open({ directory: true, title });
     if (!dir || Array.isArray(dir)) return null;
