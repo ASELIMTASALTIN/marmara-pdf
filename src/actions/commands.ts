@@ -88,6 +88,7 @@ export const commands: Command[] = [
   { id: "stamp.watermark", label: "Watermark…", needsDoc: true, run: () => import("./stampActions").then((m) => m.watermarkDialog()) },
   { id: "stamp.bates", label: "Bates numbering…", needsDoc: true, run: () => import("./stampActions").then((m) => m.batesDialog()) },
   { id: "stamp.remove", label: "Remove headers, footers & watermarks", needsDoc: true, run: () => import("./stampActions").then((m) => m.removeStampsAction()) },
+  { id: "tools.compare", label: "Compare with an earlier version…", needsDoc: true, run: () => import("./compareActions").then((m) => m.compareWithFile()) },
   { id: "redact.find", label: "Find & mark for redaction…", needsDoc: true, run: () => import("./redactActions").then((m) => m.findAndMarkDialog()) },
   { id: "redact.apply", label: "Apply redactions…", needsDoc: true, run: () => import("./redactActions").then((m) => m.applyRedactionsDialog()) },
   { id: "file.fromImages", label: "Create PDF from images…", run: () => import("./convertActions").then((m) => m.createPdfFromImages()) },

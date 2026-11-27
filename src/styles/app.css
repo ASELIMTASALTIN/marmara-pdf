@@ -2284,3 +2284,42 @@ textarea.form-input {
   border: 1px solid var(--border-strong);
   border-radius: 4px;
 }
+
+/* --- compare ------------------------------------------------------------------------ */
+.compare-list {
+  max-height: 46vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.compare-item {
+  display: flex;
+  gap: 8px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.compare-item.inserted {
+  background: color-mix(in srgb, var(--success) 8%, var(--surface));
+}
+.compare-item.deleted {
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+}
+.compare-kind {
+  font-weight: 700;
+  width: 10px;
+}
+.compare-item.inserted .compare-kind {
+  color: var(--success);
+}
+.compare-item.deleted .compare-kind {
+  color: var(--danger);
+}
+.compare-page {
+  color: var(--text-3);
+  width: 34px;
+  flex-shrink: 0;
+}
+.compare-text {
+  overflow-wrap: anywhere;
+}
