@@ -46,7 +46,12 @@ export async function checkForUpdates(): Promise<void> {
     await openDialog({ title: "Marmara PDF is up to date", message: `You have the latest version (${info.version}).`, buttons: [{ id: "ok", label: "OK", variant: "primary" }] });
     return;
   }
-  const notes = (update.body ?? "").trim();
+  // Release notes are Markdown; show them as plain text.
+  const notes = (update.body ?? "")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .trim();
   const r = await openDialog({
     title: `Marmara PDF ${update.version} is available`,
     message: `You have version ${info.version}.${notes ? `\n\n${notes.slice(0, 1200)}` : ""}${info.portable ? "\n\nThis is a portable copy: download the new version from GitHub." : ""}`,
