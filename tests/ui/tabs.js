@@ -4,7 +4,7 @@ async (page) => {
   await page.waitForTimeout(600);
   // open a second document through the toolbar (file chooser handled by the caller via setInputFiles)
   const [fc] = await Promise.all([page.waitForEvent("filechooser"), page.locator('button[title^="Open"]').first().click()]);
-  await fc.setFiles("C:/Users/ahmet/Desktop5/Marmara PDF/test-fixtures/paragraph.pdf");
+  await fc.setFiles("test-fixtures/paragraph.pdf");
   await page.waitForSelector(".tabbar .doc-tab:nth-child(2)", { timeout: 10000 });
   r.tabs = await page.locator(".doc-tab").allInnerTexts();
   r.activeName = await page.locator(".doc-tab.active").innerText();

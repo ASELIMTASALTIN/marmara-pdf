@@ -23,6 +23,6 @@ async (page) => {
   await page.locator('button[title="Export / convert"]').click();
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("menuitem", { name: /Word document/ }).click()]);
   r.docx = download.suggestedFilename();
-  await download.saveAs("C:/Users/ahmet/Desktop5/Marmara PDF/.playwright-mcp/ui-export.docx");
+  await download.saveAs(".playwright-mcp/ui-export.docx");
   return r;
 }

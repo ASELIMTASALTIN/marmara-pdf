@@ -39,12 +39,30 @@ import {
   FileSignature,
   KeyRound,
   ShieldCheck,
+  Settings,
+  Sun,
+  Moon,
+  Monitor,
+  Download,
+  Info,
 } from "lucide-react";
 import { useDoc } from "../../state/documentStore";
 import { useSearch } from "../../state/searchStore";
 import { runCommand } from "../../actions/commands";
 import { IconButton } from "../common/IconButton";
 import { showContextMenu } from "../common/ContextMenu";
+import { setTheme, useTheme, type ThemePref } from "../../theme";
+
+function ThemeButton() {
+  const resolved = useTheme((s) => s.resolved);
+  return (
+    <IconButton
+      icon={resolved === "dark" ? Sun : Moon}
+      label={resolved === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
+    />
+  );
+}
 
 function Logo() {
   return (
@@ -83,6 +101,20 @@ function openExportMenu(e: React.MouseEvent) {
     { label: "Plain text (.txt)…", icon: FileText, onSelect: () => runCommand("export.text") },
     { kind: "separator" },
     { label: "Create PDF from images…", icon: Images, onSelect: () => runCommand("file.fromImages") },
+  ]);
+}
+
+function openAppMenu(e: React.MouseEvent) {
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  const pref = useTheme.getState().pref;
+  const theme = (value: ThemePref, label: string, icon: typeof Sun) => ({ label, icon, shortcut: pref === value ? "✓" : undefined, onSelect: () => setTheme(value) });
+  showContextMenu({ clientX: r.right - 240, clientY: r.bottom + 4 }, [
+    theme("system", "Theme: same as Windows", Monitor),
+    theme("light", "Theme: light", Sun),
+    theme("dark", "Theme: dark", Moon),
+    { kind: "separator" },
+    { label: "Check for updates…", icon: Download, onSelect: () => runCommand("app.checkUpdates") },
+    { label: "About Marmara PDF", icon: Info, onSelect: () => runCommand("app.about") },
   ]);
 }
 
@@ -190,6 +222,8 @@ export function TopBar() {
           onClick={() => (searchOpen ? useSearch.setState({ open: false }) : runCommand("search.open"))}
         />
         <IconButton icon={Maximize} label="Full-screen reading" command="view.fullscreen" disabled={!doc} onClick={() => runCommand("view.fullscreen")} />
+        <ThemeButton />
+        <IconButton icon={Settings} label="Settings & updates" onClick={openAppMenu} />
       </div>
     </header>
   );

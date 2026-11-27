@@ -3,7 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { join } from "@tauri-apps/api/path";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { baseName, type OpenedFile, type Platform, type RecoveryEntry } from "./types";
+import { baseName, type AiStatus, type OpenedFile, type Platform, type RecoveryEntry } from "./types";
 
 const PDF_FILTER = [{ name: "PDF", extensions: ["pdf"] }];
 
@@ -14,6 +14,10 @@ async function readPath(path: string): Promise<OpenedFile> {
 
 async function writePath(path: string, bytes: Uint8Array, kind: "pdf" | "export" = "pdf"): Promise<void> {
   await invoke("write_file", bytes, { headers: { "x-path": encodeURIComponent(path), "x-kind": kind } });
+}
+
+function withUrl(s: AiStatus): AiStatus {
+  return { ...s, baseUrl: s.running && s.port ? `http://127.0.0.1:${s.port}` : undefined };
 }
 
 const IMAGE_FILTER = [{ name: "Images", extensions: ["png", "jpg", "jpeg"] }];
@@ -138,6 +142,29 @@ export const tauriPlatform: Platform = {
       unlisten?.();
     };
   },
+
+  ai: {
+    status: () => invoke<AiStatus>("ai_status").then(withUrl),
+    start: (opts) => invoke<AiStatus>("ai_start", { model: opts?.model ?? null, gpu: opts?.gpu ?? null, context: null }).then(withUrl),
+    stop: () => invoke("ai_stop"),
+    setModel: (path) => invoke<AiStatus>("ai_set_model", { path }).then(withUrl),
+    async pickModel() {
+      const p = await open({ multiple: false, title: "Choose an AI model (.gguf)", filters: [{ name: "GGUF model", extensions: ["gguf"] }] });
+      return typeof p === "string" ? p : null;
+    },
+    async downloadModel(url, fileName, onProgress) {
+      const { listen } = await import("@tauri-apps/api/event");
+      const off = await listen<{ received: number; total: number | null }>("ai-download-progress", (e) => onProgress(e.payload.received, e.payload.total));
+      try {
+        return await invoke<string>("ai_download_model", { url, fileName });
+      } finally {
+        off();
+      }
+    },
+    cancelDownload: () => invoke("ai_cancel_download"),
+  },
+
+  appInfo: () => invoke<{ version: string; portable: boolean }>("app_info"),
 
   recovery: {
     save: (id, name, originalPath, bytes) =>

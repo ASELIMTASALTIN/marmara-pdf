@@ -171,6 +171,34 @@ export const browserPlatform: Platform = {
     return () => window.removeEventListener("beforeunload", before);
   },
 
+  // Development in a normal browser: talks to an engine started by hand, e.g.
+  // ai-engine\llama-server.exe -m models\<model>.gguf --port 8080 (override with localStorage "marmara.aiServer").
+  ai: {
+    async status() {
+      const baseUrl = localStorage.getItem("marmara.aiServer") || "http://127.0.0.1:8080";
+      const ok = await fetch(`${baseUrl}/health`).then((r) => r.ok, () => false);
+      return { engine: "external", models: [], selected: "external server", running: ok, port: null, key: localStorage.getItem("marmara.aiKey"), gpu: false, error: ok ? null : `No AI engine answers at ${baseUrl}. Start ai-engine\llama-server.exe there.`, baseUrl: ok ? baseUrl : undefined };
+    },
+    start() {
+      return this.status();
+    },
+    async stop() {},
+    setModel() {
+      return this.status();
+    },
+    async pickModel() {
+      return null;
+    },
+    async downloadModel() {
+      throw new Error("Downloading models needs the desktop app.");
+    },
+    async cancelDownload() {},
+  },
+
+  async appInfo() {
+    return { version: "dev", portable: false };
+  },
+
   recovery: {
     async save(id, name, originalPath, bytes) {
       const snap: Snapshot = { id, name, originalPath, savedAt: Date.now(), size: bytes.length, bytes };

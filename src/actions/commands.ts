@@ -129,6 +129,15 @@ export const commands: Command[] = [
   { id: "view.fullscreen", label: "Full-screen reading", shortcut: "F11", needsDoc: true, run: () => toggleFullscreen() },
   { id: "view.escape", label: "Cancel", keys: ["Escape"], run: escape },
   { id: "view.sidebar", label: "Toggle sidebar", shortcut: "F4", run: () => useUi.setState((s) => ({ sidebarOpen: !s.sidebarOpen })) },
+  { id: "app.checkUpdates", label: "Check for updates…", run: () => import("./updateActions").then((m) => m.checkForUpdates()) },
+  { id: "app.about", label: "About Marmara PDF", run: () => import("./updateActions").then((m) => m.showAbout()) },
+  {
+    id: "view.assistant",
+    label: "Assistant",
+    shortcut: "Ctrl+J",
+    needsDoc: true,
+    run: () => import("../state/assistantStore").then(({ useAssistant }) => useAssistant.setState((s) => ({ open: !s.open }))),
+  },
 
   { id: "nav.next", label: "Next page", shortcut: "PageDown", keys: ["ArrowRight", "Ctrl+ArrowDown"], needsDoc: true, run: page(1) },
   { id: "nav.prev", label: "Previous page", shortcut: "PageUp", keys: ["ArrowLeft", "Ctrl+ArrowUp"], needsDoc: true, run: page(-1) },

@@ -30,7 +30,7 @@ async (page) => {
   await page.locator(".modal input").fill("secret123");
   const [download] = await Promise.all([page.waitForEvent("download"), page.keyboard.press("Enter")]);
   r.downloaded = download.suggestedFilename();
-  await download.saveAs("C:/Users/ahmet/Desktop5/Marmara PDF/.playwright-mcp/ui-signed.pdf");
+  await download.saveAs(".playwright-mcp/ui-signed.pdf");
   await page.waitForSelector(".sig-banner", { timeout: 20000 });
   r.banner = await page.locator(".sig-banner").textContent();
   await page.getByRole("button", { name: "Signature panel" }).click();

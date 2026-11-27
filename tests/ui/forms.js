@@ -17,7 +17,7 @@ async (page) => {
   r.undo = await page.evaluate(() => window.__marmara.doc.getState().undoStack.map((s) => s.label));
   await page.screenshot({ path: ".playwright-mcp/forms.png" });
   const [download] = await Promise.all([page.waitForEvent("download"), page.keyboard.press("Control+s")]);
-  await download.saveAs("C:/Users/ahmet/Desktop5/Marmara PDF/.playwright-mcp/form-filled.pdf");
+  await download.saveAs(".playwright-mcp/form-filled.pdf");
   r.saved = true;
   return r;
 }

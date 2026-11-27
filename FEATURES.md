@@ -136,7 +136,23 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 | JSON-argument mode for tool calling (`marmara call <command> '<json>'`), `marmara commands` schema listing | ✅ | CLI |
 | Installed with the app (private Node.js runtime, `marmara.exe` launcher on PATH) | ✅ | E2E |
 
-## 12. File management
+## 12. Assistant (local AI)
+| Feature | Status | Test |
+|---|---|---|
+| Side panel (Ctrl+J), chat in Turkish/English, streaming answers, stop, new conversation | ✅ | UI (`tests/ui/assistant.js`, real model) |
+| 22 tools on the open document (read, find, highlight, comment, replace/add text, header/footer, watermark, pages, redaction marks, forms, bookmarks, OCR, compress, Word) — every change undoable | ✅ | UI |
+| llama.cpp engine (Vulkan GPU / all CPU variants), 127.0.0.1 + random key, killed with the app | ✅ | E2E |
+| Model discovery (bundled, user folder, LM Studio, file picker), download from Hugging Face with progress | ✅ | M |
+| Gemma 4 E2B heretic-ara Q4_K_S model shipped next to the installer / inside the portable package | ✅ | E2E |
+
+## 13. App
+| Feature | Status | Test |
+|---|---|---|
+| Dark / light / system theme (also the native window frame) | ✅ | UI |
+| Check for updates: signed updates from GitHub Releases, download + install + restart; portable copies link to the download page | ✅ | E2E |
+| Portable package (runs from any folder) | ✅ | E2E |
+
+## 14. File management
 | Feature | Status | Test |
 |---|---|---|
 | Save / Save as | ✅ | UI |
@@ -146,7 +162,7 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 | Password-protected PDFs (open, edit, save keeps password) | ✅ | UI |
 | Corrupted / unsupported PDFs handled gracefully | ✅ | UI |
 
-## 13. Build & distribution
+## 15. Build & distribution
 | Feature | Status | Test |
 |---|---|---|
 | Code-signing hook (PFX, certificate store / EV token, Azure Trusted Signing) with timestamping | ✅ | M (test certificate) |

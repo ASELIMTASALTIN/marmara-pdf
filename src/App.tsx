@@ -17,12 +17,15 @@ import { useAppLifecycle } from "./hooks/useAppLifecycle";
 import { toggleFullscreen } from "./actions/commands";
 import { cancelEdit } from "./actions/textEditActions";
 import { SignatureBanner } from "./components/signatures/SignaturePanel";
+import { AssistantPanel } from "./components/assistant/AssistantPanel";
+import { useAssistant } from "./state/assistantStore";
 
 export default function App() {
   const hasDoc = useDoc((s) => !!s.doc);
   const fullscreen = useUi((s) => s.fullscreen);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
   const dropHover = useUi((s) => s.dropHover);
+  const assistantOpen = useAssistant((s) => s.open);
   useShortcuts();
   useAppLifecycle();
 
@@ -56,6 +59,7 @@ export default function App() {
                 </button>
               )}
             </section>
+            {assistantOpen && !fullscreen && <AssistantPanel />}
           </>
         ) : (
           <HomeScreen />

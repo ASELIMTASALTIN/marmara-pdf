@@ -17,6 +17,7 @@ import {
   PenLine,
   ScanText,
   Signature,
+  Sparkles,
   Square,
   StickyNote,
   Strikethrough,
@@ -35,6 +36,7 @@ import { activateTool } from "../../actions/toolActions";
 import { runCommand } from "../../actions/commands";
 import { viewer } from "../viewer/viewerController";
 import { IconButton } from "../common/IconButton";
+import { useAssistant } from "../../state/assistantStore";
 
 interface ToolDef {
   tool: Tool;
@@ -141,6 +143,7 @@ function ZoomControls() {
 export function Toolbar() {
   const tool = useUi((s) => s.tool);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
+  const assistantOpen = useAssistant((s) => s.open);
   const pick = (t: Tool) => void activateTool(t);
 
   return (
@@ -163,6 +166,8 @@ export function Toolbar() {
       <PageNav />
       <span className="divider" />
       <ZoomControls />
+      <span className="divider" />
+      <IconButton icon={Sparkles} label="Assistant" command="view.assistant" showLabel active={assistantOpen} onClick={() => runCommand("view.assistant")} className="assistant-toggle" />
     </div>
   );
 }

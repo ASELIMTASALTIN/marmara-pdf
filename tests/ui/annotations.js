@@ -91,7 +91,7 @@ async (page) => {
 
   // 10) save -> browser download, keep the file for inspection
   const [download] = await Promise.all([page.waitForEvent("download"), page.keyboard.press("Control+s")]);
-  const path = "C:/Users/ahmet/AppData/Local/Temp/claude/a23ed42c89dfacdc/8cc703bf-d5b3-402e-9d9b-64b031a7d980/scratchpad/annotated.pdf";
+  const path = ".playwright-mcp/annotated.pdf";
   await download.saveAs(path);
   r.saved = download.suggestedFilename();
   r.dirtyAfterSave = await page.evaluate(() => window.__marmara.doc.getState().dirty);

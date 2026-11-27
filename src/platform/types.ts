@@ -13,6 +13,28 @@ export interface SaveOptions {
   saveAs: boolean;
 }
 
+export interface AiModelInfo {
+  path: string;
+  name: string;
+  size: number;
+  source: "bundled" | "user" | "lmstudio" | "dev" | "selected" | string;
+}
+
+export interface AiStatus {
+  /** Engine folder, null when the engine is not installed. */
+  engine: string | null;
+  models: AiModelInfo[];
+  selected: string | null;
+  running: boolean;
+  port: number | null;
+  key: string | null;
+  gpu: boolean;
+  /** Why the engine stopped, with the end of its log. */
+  error: string | null;
+  /** Where to reach the engine's HTTP API (set when running). */
+  baseUrl?: string;
+}
+
 export interface RecoveryEntry {
   id: string;
   name: string;
@@ -56,6 +78,20 @@ export interface Platform {
    * cannot run async UI on unload, so they use `hasUnsavedChanges` instead.
    */
   onCloseRequested(handler: () => Promise<boolean>, hasUnsavedChanges: () => boolean): () => void;
+  /** Local AI assistant engine (llama.cpp server on 127.0.0.1). */
+  ai: {
+    status(): Promise<AiStatus>;
+    start(opts?: { model?: string; gpu?: boolean }): Promise<AiStatus>;
+    stop(): Promise<void>;
+    setModel(path: string): Promise<AiStatus>;
+    /** Lets the user pick a .gguf file; returns its path. */
+    pickModel(): Promise<string | null>;
+    /** Downloads a model (Hugging Face) into the user's model folder; returns its path. */
+    downloadModel(url: string, fileName: string, onProgress: (received: number, total: number | null) => void): Promise<string>;
+    cancelDownload(): Promise<void>;
+  };
+  /** Version and install kind (portable copies cannot self-update). */
+  appInfo(): Promise<{ version: string; portable: boolean }>;
   recovery: {
     save(id: string, name: string, originalPath: string | undefined, bytes: Uint8Array): Promise<void>;
     list(): Promise<RecoveryEntry[]>;

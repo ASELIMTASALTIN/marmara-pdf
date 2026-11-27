@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Marmara PDF",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.marmara.pdf",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost blob: data:"
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost blob: data: http://127.0.0.1:*"
     }
   },
   "bundle": {
@@ -87,7 +87,20 @@
       }
     },
     "resources": {
-      "../dist-cli/": "cli/"
+      "../dist-cli/": "cli/",
+      "../ai-engine/": "ai/"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZBM0YzQkVBNzcxMEVDMDgKUldRSTdCQjM2anMvYW1CRnhNNTRTYzJNYzhRNXROWitUUjJhTXhKSmRZdTRkaDNYMEtqbjlGWXkK",
+      "endpoints": [
+        "https://github.com/ASELIMTASALTIN/marmara-pdf/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

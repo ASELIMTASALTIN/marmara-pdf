@@ -32,3 +32,13 @@ test-fixtures
 
 # command-line package (scripts/build-cli.mjs)
 dist-cli
+
+# local AI model files (too large for git; packaged by scripts/package-release.mjs)
+models/*.gguf
+# llama.cpp source and engine build
+engine-src/
+ai-engine/
+
+# release packages (scripts/release.mjs); release notes are tracked
+release/*
+!release/notes/
