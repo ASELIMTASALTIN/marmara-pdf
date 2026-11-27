@@ -1,8 +1,8 @@
 import { TEXT_CONTENT_OPTIONS, type PDFDocumentProxy } from "../core/pdf/pdfjs";
 import { parsePageRanges } from "../core/pdf/pageOps";
-import type { OcrLanguage, OcrLine } from "../core/ocr/recognize";
+import type { OcrLanguage } from "../core/ocr/recognize";
 import type { OcrLineGeom } from "../core/ocr/textLayer";
-import type { Point } from "../core/annotations/types";
+import { toGeometry } from "../core/ocr/geometry";
 import { commit, exclusive, setBusyLabel, useDoc, withBusy } from "../state/documentStore";
 import { useUi } from "../state/uiStore";
 import { errorMessage, openDialog, toast } from "../state/dialogStore";
@@ -35,34 +35,6 @@ export async function pageTextStatus(pdf: PDFDocumentProxy, index: number): Prom
 }
 
 export const needsOcr = (s: PageTextStatus) => s.realChars < 12;
-
-function unit(a: Point, b: Point): Point {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const l = Math.hypot(dx, dy) || 1;
-  return [dx / l, dy / l];
-}
-
-/** Converts recognised pixel lines to PDF-space line geometry. */
-function toGeometry(lines: OcrLine[], vp: { convertToPdfPoint(x: number, y: number): number[]; scale: number }): OcrLineGeom[] {
-  const P = (x: number, y: number) => vp.convertToPdfPoint(x, y) as Point;
-  const s = vp.scale;
-  return lines.map((l) => {
-    const first = l.words[0];
-    const slope = (l.baseline[1] - l.baseline[0]) / Math.max(1, l.x1 - l.x0);
-    const baseAt = (x: number) => l.baseline[0] + slope * (x - l.x0);
-    const by = baseAt(first.x0);
-    // Size from the ascent above the baseline (cap/ascender height ≈ 0.72 em).
-    const ascentPx = Math.max(4, by - l.y0);
-    return {
-      origin: P(first.x0, by),
-      dir: unit(P(first.x0, by), P(first.x0 + 100, by)),
-      up: unit(P(first.x0, by), P(first.x0, by - 100)),
-      size: ascentPx / 0.72 / s,
-      words: l.words.map((w) => ({ text: w.text, start: (w.x0 - first.x0) / s, width: (w.x1 - w.x0) / s })),
-    };
-  });
-}
 
 /** Renders a page for OCR at ~300 DPI (bounded to keep memory reasonable). */
 async function renderForOcr(pdf: PDFDocumentProxy, index: number) {

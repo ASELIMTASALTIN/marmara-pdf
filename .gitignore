@@ -29,3 +29,6 @@ src-tauri/target
 src-tauri/gen
 test-fixtures
 .playwright-mcp
+
+# command-line package (scripts/build-cli.mjs)
+dist-cli

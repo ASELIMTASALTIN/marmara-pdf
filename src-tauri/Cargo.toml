@@ -5,6 +5,7 @@ license = "AGPL-3.0-or-later"
 description = "Marmara PDF - free, local PDF reader and editor"
 authors = ["Marmara PDF contributors"]
 edition = "2024"
+default-run = "marmara-pdf"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

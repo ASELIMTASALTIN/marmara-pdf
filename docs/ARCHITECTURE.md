@@ -36,6 +36,7 @@ src/
                       redaction, stamps, compare, batch, comments (XFDF), commands
   components/         React UI (viewer, sidebar, toolbars, dialogs, overlays)
   hooks/              Shortcuts, lifecycle (drop, autosave, close guard), text markup
+  cli/                Command line + MCP server over the same core (Node.js)
 ```
 
 ## Document model
@@ -99,6 +100,30 @@ Only the active document lives in the `useDoc` store. Switching tabs parks
 its full state (bytes, undo stacks, annotations, form values, view position)
 in `state/sessions.ts` and restores the other one, so every tab keeps its own
 history. Closing or quitting checks every tab for unsaved changes.
+
+## Command line and MCP server
+
+`src/cli` runs the same `core/` modules under Node.js; only pdf.js (rendering)
+is not used, MuPDF renders instead (OCR input, `to-images`). Each command is
+declared once in a registry (`defineCommand`: parameters with types,
+descriptions, defaults). The argument parser, `marmara help`, the generated
+reference ([CLI.md](CLI.md)), the JSON Schemas of `marmara commands` and the
+MCP tools (`marmara mcp`, newline-delimited JSON-RPC over stdio) are all
+derived from these declarations, so they cannot drift apart.
+
+Conventions shared by every command: results are JSON; inputs are never
+modified unless `--overwrite` is given; display coordinates (points from the
+top-left of the shown page) are converted to PDF user space at the boundary
+(`cli/io.ts`); encrypted inputs are re-encrypted with the same password;
+rewriting a signed file needs `--break-signatures`; `--root` confines file
+access for MCP clients.
+
+Packaging: `scripts/build-cli.mjs` bundles the CLI with Vite into
+`dist-cli/marmara.mjs` and copies MuPDF, Tesseract (LSTM cores only) and the
+OCR models next to it. The installer ships that folder as `cli\` with a
+private `node.exe`; `marmara.exe` (`src-tauri/src/bin/marmara.rs`) is a tiny
+console launcher, and the NSIS hook / WiX fragment add the install folder to
+PATH.
 
 ## Performance
 

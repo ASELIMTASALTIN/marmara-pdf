@@ -10,10 +10,13 @@
     "dev": "vite",
     "prebuild": "node scripts/copy-assets.mjs",
     "build": "tsc && vite build",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.cli.json",
     "test": "vitest run",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:cli": "node scripts/build-cli.mjs",
+    "cli": "node dist-cli/marmara.mjs",
+    "test:cli": "node scripts/build-cli.mjs && node tests/cli/smoke.mjs"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
@@ -36,6 +39,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/node": "^24.19.4",
     "@types/node-forge": "^1.3.14",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

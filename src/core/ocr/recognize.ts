@@ -8,6 +8,22 @@ import type { Worker } from "tesseract.js";
 
 const BASE = `${import.meta.env.BASE_URL}vendor/tesseract/`;
 
+/** Image input: a canvas in the app, PNG/JPEG bytes under Node (CLI). */
+export type OcrImage = HTMLCanvasElement | Uint8Array;
+
+type WorkerPaths = { workerPath?: string; corePath?: string; langPath?: string; workerBlobURL?: boolean; gzip?: boolean };
+let paths: WorkerPaths = {
+  workerPath: `${BASE}worker.min.js`,
+  corePath: `${BASE}core`,
+  langPath: `${BASE}lang`,
+  workerBlobURL: false,
+};
+
+/** Overrides where Tesseract loads its worker, core and language data (used by the Node CLI). */
+export function configureOcr(p: WorkerPaths) {
+  paths = p;
+}
+
 export type OcrLanguage = "tur+eng" | "eng" | "tur";
 
 export interface OcrWord {
@@ -40,11 +56,8 @@ async function getWorker(lang: OcrLanguage): Promise<Worker> {
   if (existing) return existing;
   const { createWorker } = await import("tesseract.js");
   const w = createWorker(lang.split("+"), 1 /* LSTM only */, {
-    workerPath: `${BASE}worker.min.js`,
-    corePath: `${BASE}core`,
-    langPath: `${BASE}lang`,
+    ...paths,
     cacheMethod: "none",
-    workerBlobURL: false,
     logger: (m) => {
       if (m.status === "recognizing text") progressSink?.(m.progress);
     },
@@ -69,7 +82,7 @@ const TURKISH_LETTERS = /[ğĞşŞıçÇöÖüÜ]/;
  * the Turkish model otherwise tends to read a plain "I" as "İ" (e.g. "İnvoice").
  */
 export async function recognizeAuto(
-  image: HTMLCanvasElement,
+  image: OcrImage,
   lang: OcrLanguage,
   onProgress?: (p: number) => void,
 ): Promise<{ lines: OcrLine[]; confidence: number; usedLang: OcrLanguage }> {
@@ -82,11 +95,11 @@ export async function recognizeAuto(
 }
 
 /** Recognises text in an image (canvas) and returns lines with word boxes. */
-export async function recognizeImage(image: HTMLCanvasElement, lang: OcrLanguage, onProgress?: (p: number) => void): Promise<{ lines: OcrLine[]; confidence: number }> {
+export async function recognizeImage(image: OcrImage, lang: OcrLanguage, onProgress?: (p: number) => void): Promise<{ lines: OcrLine[]; confidence: number }> {
   const w = await getWorker(lang);
   progressSink = onProgress ?? null;
   try {
-    const { data } = await w.recognize(image, {}, { blocks: true, text: false, hocr: false, tsv: false });
+    const { data } = await w.recognize(image as Parameters<typeof w.recognize>[0], {}, { blocks: true, text: false, hocr: false, tsv: false });
     const lines: OcrLine[] = [];
     for (const block of data.blocks ?? []) {
       for (const para of block.paragraphs) {

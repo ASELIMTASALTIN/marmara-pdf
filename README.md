@@ -14,7 +14,10 @@ documents (Turkish + English), headers/footers, page and Bates numbering,
 watermarks, bookmarks, document comparison, file-size reduction, document
 check (accessibility/archiving) and PDF/A conversion, batch processing,
 conversion (PDF → Word / images / text, images → PDF), certificate-based
-digital signatures with verification, password-protected PDFs, crash recovery. See [FEATURES.md](FEATURES.md) and
+digital signatures with verification, password-protected PDFs, crash recovery.
+Everything is also scriptable through the `marmara` command line and usable by
+local LLMs as an MCP server — see [docs/LLM.md](docs/LLM.md) and
+[docs/CLI.md](docs/CLI.md). See [FEATURES.md](FEATURES.md) and
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 Built with Tauri 2 (Rust + WebView2), React, TypeScript, pdf.js, pdf-lib,
@@ -31,12 +34,14 @@ MuPDF.js and Tesseract.js. Licensed under **AGPL-3.0-or-later**.
 npm install
 npm run tauri dev      # desktop app with hot reload
 npm run dev            # UI only, in a normal browser (http://localhost:1420)
+npm run build:cli      # command line into dist-cli/ (then: npm run cli -- help)
 ```
 
 ## Test
 
 ```sh
 npm test                           # unit tests (vitest)
+npm run test:cli                   # builds the command line and runs every command + the MCP server
 cd src-tauri && cargo test         # Rust tests (atomic writes, path decoding)
 node scripts/make-fixtures.mjs     # generate test PDFs into test-fixtures/
 ```
@@ -54,6 +59,7 @@ npm run tauri build
 
 Output: `src-tauri/target/release/bundle/nsis/Marmara PDF_<version>_x64-setup.exe`
 and `src-tauri/target/release/bundle/msi/…msi`. The installer registers
-Marmara PDF as an editor for `.pdf` files. To sign the installer (removes the
+Marmara PDF as an editor for `.pdf` files, and installs the `marmara` command
+line (with its own Node.js runtime) on the user's PATH. To sign the installer (removes the
 SmartScreen warning with a trusted certificate), see
 [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).

@@ -126,7 +126,17 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 | Annotations / forms on signed files saved incrementally (signatures stay valid) | ✅ | U |
 | Certificate trust chain against a root store | ⬜ (reported as "identity not verified") | — |
 
-## 11. File management
+## 11. Command line & LLM tools
+| Feature | Status | Test |
+|---|---|---|
+| `marmara` command line: 50 commands covering every editor feature, JSON results | ✅ | U, CLI (`tests/cli/smoke.mjs`) |
+| Display coordinates (top-left, points) shared by search, text blocks, objects, annotations, redaction, fields | ✅ | U, CLI |
+| Originals never overwritten without `--overwrite`; signed files protected (`--break-signatures`); passwords kept | ✅ | U, CLI |
+| MCP server (`marmara mcp`, stdio) with one tool per command, JSON Schemas, read-only hints, `--root` folder sandbox | ✅ | CLI |
+| JSON-argument mode for tool calling (`marmara call <command> '<json>'`), `marmara commands` schema listing | ✅ | CLI |
+| Installed with the app (private Node.js runtime, `marmara.exe` launcher on PATH) | ✅ | E2E |
+
+## 12. File management
 | Feature | Status | Test |
 |---|---|---|
 | Save / Save as | ✅ | UI |
@@ -136,7 +146,7 @@ real browser (`tests/ui/*.js`, run with Playwright against `npm run dev`),
 | Password-protected PDFs (open, edit, save keeps password) | ✅ | UI |
 | Corrupted / unsupported PDFs handled gracefully | ✅ | UI |
 
-## 12. Build & distribution
+## 13. Build & distribution
 | Feature | Status | Test |
 |---|---|---|
 | Code-signing hook (PFX, certificate store / EV token, Azure Trusted Signing) with timestamping | ✅ | M (test certificate) |

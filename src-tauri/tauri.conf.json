@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build && npm run build:cli -- --with-node",
     "frontendDist": "../dist"
   },
   "app": {
@@ -62,7 +62,8 @@
           "English",
           "Turkish"
         ],
-        "displayLanguageSelector": true
+        "displayLanguageSelector": true,
+        "installerHooks": "windows/hooks.nsh"
       },
       "signCommand": {
         "cmd": "powershell",
@@ -75,7 +76,18 @@
           "%1"
         ]
       },
-      "digestAlgorithm": "sha256"
+      "digestAlgorithm": "sha256",
+      "wix": {
+        "fragmentPaths": [
+          "windows/cli-path.wxs"
+        ],
+        "componentRefs": [
+          "MarmaraCliPath"
+        ]
+      }
+    },
+    "resources": {
+      "../dist-cli/": "cli/"
     }
   }
 }
