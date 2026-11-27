@@ -4,6 +4,7 @@ import { useUi } from "../../state/uiStore";
 import { AnnotationLayer } from "../annotations/AnnotationLayer";
 import { TextEditLayer } from "../textedit/TextEditLayer";
 import { FormLayer } from "../forms/FormLayer";
+import { ObjectLayer } from "../objects/ObjectLayer";
 import { pageRegistry } from "./pageRegistry";
 
 export interface OverlayProps {
@@ -35,6 +36,7 @@ export function PageOverlays({ page, pageIndex, pageId, zoom }: OverlayProps) {
       <span ref={anchor} hidden />
       <FormLayer page={page} viewport={viewport} />
       <AnnotationLayer viewport={viewport} pageId={pageId} pageIndex={pageIndex} />
+      {tool === "objects" && <ObjectLayer viewport={viewport} pageIndex={pageIndex} />}
       {tool === "edit-text" && <TextEditLayer page={page} viewport={viewport} pageId={pageId} pageIndex={pageIndex} />}
     </>
   );

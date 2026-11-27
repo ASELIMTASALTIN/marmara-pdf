@@ -2213,3 +2213,74 @@ textarea.form-input {
 .form-prep:hover .form-prep-del {
   opacity: 1;
 }
+
+/* --- object editing ---------------------------------------------------------------- */
+.viewer.tool-objects .textLayer,
+.viewer.tool-objects .annot-layer,
+.viewer.tool-objects .form-layer {
+  pointer-events: none !important;
+}
+.object-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  cursor: default;
+}
+.obj-box {
+  position: absolute;
+  outline: 1px dashed transparent;
+}
+.object-layer:hover .obj-box {
+  outline-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.obj-box:hover {
+  outline: 1.5px solid var(--accent) !important;
+  cursor: move;
+}
+.obj-box.selected {
+  outline: 1.5px solid var(--accent) !important;
+  background: rgb(19 102 196 / 0.06);
+}
+.obj-toolbar {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+}
+.obj-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-2);
+}
+.obj-toolbar button:hover {
+  background: var(--surface-3);
+}
+.obj-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 0 4px;
+}
+.obj-color input {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}

@@ -5,6 +5,7 @@ import {
   Circle,
   Eraser,
   EyeOff,
+  Shapes,
   FormInput,
   Hand,
   Highlighter,
@@ -155,6 +156,7 @@ export function Toolbar() {
       ))}
       <div className="tool-group">
         <IconButton icon={TextCursorInput} label="Edit text" command="tool.editText" showLabel active={tool === "edit-text"} onClick={() => pick("edit-text")} data-tool="edit-text" />
+        <IconButton icon={Shapes} label="Edit objects (images & graphics)" active={tool === "objects"} onClick={() => pick("objects")} data-tool="objects" />
         <IconButton icon={ScanText} label="OCR" showLabel onClick={() => runCommand("ocr.run")} />
       </div>
       <div className="toolbar-spacer" />

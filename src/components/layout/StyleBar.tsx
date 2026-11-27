@@ -27,6 +27,7 @@ const HINTS: Partial<Record<Tool, string>> = {
   eraser: "Click or drag over annotations to remove them",
   "edit-text": "Click a line of text to edit it",
   redact: "Drag over text or images to mark them for redaction",
+  objects: "Click an image or graphic to move, resize, recolour, replace or delete it",
   form: "Drag a rectangle to add a field · existing fields can be deleted",
 };
 

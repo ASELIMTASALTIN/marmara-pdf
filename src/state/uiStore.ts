@@ -21,7 +21,8 @@ export type Tool =
   | "edit-text"
   | "digital-signature"
   | "redact"
-  | "form";
+  | "form"
+  | "objects";
 
 export type SidebarTab = "pages" | "annotations" | "signatures" | "bookmarks";
 
