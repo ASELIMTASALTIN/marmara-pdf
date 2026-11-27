@@ -14,6 +14,7 @@ import {
 } from "../state/documentStore";
 import { useUi } from "../state/uiStore";
 import { useSearch } from "../state/searchStore";
+import { captureDoc, dirtyParked, dropActive, parkActive, registerActive, switchTo, tabs, useSessions } from "../state/sessions";
 import { confirm, errorMessage, openDialog, toast } from "../state/dialogStore";
 
 // --- recent files ---------------------------------------------------------------
@@ -82,7 +83,20 @@ export async function confirmDiscardChanges(): Promise<boolean> {
 }
 
 export async function openFile(file: OpenedFile, opts: { dirty?: boolean; id?: string } = {}): Promise<boolean> {
-  if (!(await confirmDiscardChanges())) return false;
+  // Already open in a tab: switch to it.
+  if (file.path) {
+    const existing = tabs().find((t) => {
+      const d = useDoc.getState().doc;
+      if (d?.id === t.id) return d.path === file.path;
+      return useSessions.getState().parked[t.id]?.doc.doc?.path === file.path;
+    });
+    if (existing) {
+      switchTo(existing.id);
+      return true;
+    }
+  }
+  // The current document stays open in its own tab.
+  const previous = useDoc.getState().doc ? captureDoc() : null;
   let password: string | undefined;
   for (;;) {
     try {
@@ -97,8 +111,10 @@ export async function openFile(file: OpenedFile, opts: { dirty?: boolean; id?: s
           bytes = await decryptPdf(bytes, password);
           if (password) protection = { userPassword: password };
         }
-        await setDocument({ name: file.name, path: file.path, bytes, protection, dirty: opts.dirty, id: opts.id });
+        await setDocument({ name: file.name, path: file.path, bytes, protection, dirty: opts.dirty, id: opts.id, keepPrevious: !!previous });
       });
+      if (previous) parkActive(previous);
+      registerActive();
       break;
     } catch (e) {
       if (e instanceof PasswordRequiredError) {
@@ -256,8 +272,21 @@ export function saveDocument(saveAs: boolean): Promise<boolean> {
 export async function closeDocument(): Promise<void> {
   if (!(await confirmDiscardChanges())) return;
   await clearRecovery();
-  closeDocState();
-  resetViewState();
+  const closing = useDoc.getState().pdf;
+  if (dropActive()) void closing?.loadingTask.destroy();
+  else {
+    closeDocState();
+    resetViewState();
+  }
+}
+
+/** Before quitting: ask about every tab with unsaved changes. */
+export async function confirmCloseAll(): Promise<boolean> {
+  for (const id of dirtyParked()) {
+    switchTo(id);
+    if (!(await confirmDiscardChanges())) return false;
+  }
+  return confirmDiscardChanges();
 }
 
 // --- crash recovery --------------------------------------------------------------

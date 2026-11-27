@@ -3,6 +3,7 @@ import { FileDown } from "lucide-react";
 import { useDoc } from "./state/documentStore";
 import { useUi } from "./state/uiStore";
 import { TopBar } from "./components/layout/TopBar";
+import { TabBar } from "./components/layout/TabBar";
 import { Toolbar } from "./components/layout/Toolbar";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { Viewer } from "./components/viewer/Viewer";
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <div className={`app${fullscreen ? " fullscreen" : ""}`}>
       {!fullscreen && <TopBar />}
+      {!fullscreen && hasDoc && <TabBar />}
       {!fullscreen && hasDoc && <Toolbar />}
       {!fullscreen && hasDoc && <StyleBar />}
       <main className="workspace">

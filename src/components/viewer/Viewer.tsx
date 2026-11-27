@@ -134,7 +134,10 @@ export function Viewer() {
   // Reset scroll when a different document is loaded.
   const docId = useDoc((s) => s.doc?.id);
   useLayoutEffect(() => {
+    // New document: start at the top; switching back to a tab restores its page.
+    const page = useUi.getState().currentPage;
     if (ref.current) ref.current.scrollTop = 0;
+    if (page > 0) requestAnimationFrame(() => viewer.scrollToPage(page));
   }, [docId]);
 
   // --- imperative api -----------------------------------------------------------

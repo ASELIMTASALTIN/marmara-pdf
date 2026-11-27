@@ -2105,3 +2105,68 @@ textarea.form-input {
 .sidebar-tabs button {
   min-width: 0;
 }
+
+/* --- document tabs ------------------------------------------------------------------ */
+.tabbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 34px;
+  padding: 0 8px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.doc-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  height: 28px;
+  padding: 0 6px 0 10px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 12.5px;
+  flex-shrink: 0;
+}
+.doc-tab:hover {
+  background: var(--surface-3);
+}
+.doc-tab.active {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  font-weight: 550;
+  margin-bottom: -1px;
+  height: 29px;
+}
+.doc-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doc-tab-close,
+.doc-tab-new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-3);
+}
+.doc-tab-close:hover,
+.doc-tab-new:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.doc-tab-new {
+  margin: 0 0 4px 4px;
+}

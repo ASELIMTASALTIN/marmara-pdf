@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { platform } from "../platform";
 import { useDoc } from "../state/documentStore";
 import { useUi } from "../state/uiStore";
-import { confirmDiscardChanges, handleDroppedFiles, openPath, writeRecoverySnapshot } from "../actions/fileActions";
+import { confirmCloseAll, handleDroppedFiles, openPath, writeRecoverySnapshot } from "../actions/fileActions";
 
 const AUTOSAVE_MS = 30_000;
 
@@ -39,7 +39,7 @@ export function useAppLifecycle() {
   useEffect(
     () =>
       platform.onCloseRequested(
-        () => confirmDiscardChanges(),
+        () => confirmCloseAll(),
         () => useDoc.getState().dirty,
       ),
     [],

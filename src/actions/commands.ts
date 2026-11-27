@@ -60,6 +60,15 @@ function escape() {
   else if (ui.fullscreen) void toggleFullscreen(false);
 }
 
+function cycleTab(dir: 1 | -1) {
+  void import("../state/sessions").then(({ tabs, switchTo }) => {
+    const list = tabs();
+    if (list.length < 2) return;
+    const i = list.findIndex((t) => t.id === useDoc.getState().doc?.id);
+    switchTo(list[(i + dir + list.length) % list.length].id);
+  });
+}
+
 const page = (delta: number) => () => viewer.scrollToPage(useUi.getState().currentPage + delta);
 const tool = (t: Tool) => () => activateTool(t);
 
@@ -68,6 +77,8 @@ export const commands: Command[] = [
   { id: "file.save", label: "Save", shortcut: "Ctrl+S", needsDoc: true, run: () => saveDocument(false) },
   { id: "file.saveAs", label: "Save as…", shortcut: "Ctrl+Shift+S", needsDoc: true, run: () => saveDocument(true) },
   { id: "file.close", label: "Close document", shortcut: "Ctrl+W", needsDoc: true, run: closeDocument },
+  { id: "tab.next", label: "Next tab", shortcut: "Ctrl+Tab", needsDoc: true, run: () => cycleTab(1) },
+  { id: "tab.prev", label: "Previous tab", shortcut: "Ctrl+Shift+Tab", needsDoc: true, run: () => cycleTab(-1) },
   { id: "file.combine", label: "Combine files…", run: pickAndMerge },
   { id: "file.print", label: "Print…", shortcut: "Ctrl+P", needsDoc: true, run: () => import("./printActions").then((m) => m.printDialog()) },
   { id: "tools.compress", label: "Reduce file size…", needsDoc: true, run: () => import("./optimizeActions").then((m) => m.compressDialog()) },

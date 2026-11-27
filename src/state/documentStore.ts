@@ -121,6 +121,8 @@ export async function setDocument(input: {
   protection?: { userPassword: string };
   dirty?: boolean;
   id?: string;
+  /** Keep the previous document's renderer alive (it moves to another tab). */
+  keepPrevious?: boolean;
 }): Promise<void> {
   const { pdf, pageSizes } = await loadProxy(input.bytes);
   const prev = useDoc.getState().pdf;
@@ -143,7 +145,7 @@ export async function setDocument(input: {
     undoStack: [],
     redoStack: [],
   }));
-  void prev?.loadingTask.destroy();
+  if (!input.keepPrevious) void prev?.loadingTask.destroy();
 }
 
 export function closeDocument(): void {
