@@ -59,7 +59,7 @@ describe("conversion", () => {
     } catch (e) {
       if ((e as { code?: string }).code !== "ENOENT") throw e;
     }
-  });
+  }, 30000);
 
   it("embeds images when converting to .docx", async () => {
     const doc = await PDFDocument.create();

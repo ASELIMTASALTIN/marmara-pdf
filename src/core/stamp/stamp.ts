@@ -5,8 +5,10 @@ import { loadPage, op, writeContents } from "../textedit/editor";
 type PDFObject = import("mupdf").PDFObject;
 const R = (o: PDFObject): PDFObject => (o.isNull() ? o : o.resolve());
 
-/** Marked-content tag of stamps, so they can be replaced or removed. */
-export const STAMP_TAG = "MarmaraStamp";
+/** Marked-content tags per stamp kind, so each kind can be replaced or removed independently. */
+export const STAMP_TAGS = { headerFooter: "MarmaraHF", watermark: "MarmaraWM", bates: "MarmaraBates" } as const;
+type StampKind = keyof typeof STAMP_TAGS;
+const ALL_TAGS = new Set<string>([...Object.values(STAMP_TAGS), "MarmaraStamp"]);
 
 export interface HeaderFooter {
   left?: string;
@@ -44,7 +46,7 @@ export function expandTokens(t: string, ctx: { page: number; pages: number; bate
     .replace(/\{file\}/g, ctx.file);
 }
 
-function stripStamps(ops: Operation[]): Operation[] {
+function stripStamps(ops: Operation[], tags: Set<string> = ALL_TAGS): Operation[] {
   const out: Operation[] = [];
   let depth = 0;
   for (const o of ops) {
@@ -54,7 +56,7 @@ function stripStamps(ops: Operation[]): Operation[] {
       else if (o.op === "EMC") depth--;
       continue;
     }
-    if (begin && o.operands[0]?.t === "name" && o.operands[0].v === STAMP_TAG) {
+    if (begin && o.operands[0]?.t === "name" && tags.has(o.operands[0].v)) {
       depth = 1;
       continue;
     }
@@ -134,7 +136,17 @@ export async function stampPages(bytes: Uint8Array, o: StampOptions): Promise<Ui
         file: o.fileName ?? "",
       };
 
-      const ops: Operation[] = [op("BMC", name(STAMP_TAG)), op("q")];
+      let ops: Operation[] = [];
+      const groups: Operation[] = [];
+      const kinds = new Set<StampKind>();
+      const beginGroup = () => {
+        ops = [];
+      };
+      const endGroup = (kind: StampKind) => {
+        if (!ops.length) return;
+        kinds.add(kind);
+        groups.push(op("BMC", name(STAMP_TAGS[kind])), op("q"), ...ops, op("Q"), op("EMC"));
+      };
       // Text placed at (x, baselineY) in displayed coordinates, reading left-to-right as displayed.
       const place = (text: string, x: number, baselineY: number, s: number, angleDeg = 0, rgb = color) => {
         if (!text) return;
@@ -152,6 +164,11 @@ export async function stampPages(bytes: Uint8Array, o: StampOptions): Promise<Ui
         );
       };
 
+      // Bates numbers form their own group so they can coexist with page numbers.
+      const usesBates = (t?: string) => !!t && t.includes("{bates}");
+      const hfAll = [o.header, o.footer].flatMap((x) => (x ? [x.left, x.center, x.right] : []));
+      const kindHF: StampKind = hfAll.some(usesBates) && hfAll.filter((t) => t).every(usesBates) ? "bates" : "headerFooter";
+      beginGroup();
       for (const [hf, yBase] of [
         [o.header, margin + size * 0.8],
         [o.footer, H - margin],
@@ -165,6 +182,9 @@ export async function stampPages(bytes: Uint8Array, o: StampOptions): Promise<Ui
         place(r, W - margin - width(r, size), yBase, size);
       }
 
+      endGroup(kindHF);
+
+      beginGroup();
       if (o.watermark?.text) {
         const wm = o.watermark;
         const text = expandTokens(wm.text, ctx);
@@ -176,10 +196,11 @@ export async function stampPages(bytes: Uint8Array, o: StampOptions): Promise<Ui
         ops.push(op("gs", name("MPSG")));
         place(text, cx, cy, wm.size, wm.rotation, hexToRgb(wm.color));
       }
-      ops.push(op("Q"), op("EMC"));
+      endGroup("watermark");
 
-      const base = o.replace === false ? lp.ops : stripStamps(lp.ops);
-      writeContents(doc, lp.pageObj, [op("q"), ...base, op("Q"), ...ops]);
+      const replaceTags = new Set([...kinds].map((k) => STAMP_TAGS[k]));
+      const base = o.replace === false ? lp.ops : stripStamps(lp.ops, replaceTags);
+      writeContents(doc, lp.pageObj, [op("q"), ...base, op("Q"), ...groups]);
     }
     return saveMupdf(doc, "garbage=compact,compress");
   } finally {

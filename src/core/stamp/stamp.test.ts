@@ -49,6 +49,11 @@ describe("headers, footers, Bates, watermark", () => {
     const lines = pageInfo(twice, 0).lines.map((l) => l.text);
     expect(lines).toContain("ONAYLI");
     expect(lines).not.toContain("TASLAK");
+    // a header/footer added afterwards keeps the watermark (different stamp kind)
+    const both = await stampPages(twice, { pages: [0], footer: { center: "Sayfa {page}" } });
+    const l2 = pageInfo(both, 0).lines.map((l) => l.text);
+    expect(l2).toContain("ONAYLI");
+    expect(l2).toContain("Sayfa 1");
     const removed = await removeStamps(twice);
     expect(removed.pages).toBe(1);
     expect(pageInfo(removed.bytes, 0).lines).toHaveLength(0);

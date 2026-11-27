@@ -94,6 +94,7 @@ export function BookmarksPanel() {
           {editing === n.id ? (
             <input
               autoFocus
+              onFocus={(e) => e.target.select()}
               className="bm-edit"
               defaultValue={n.title}
               onClick={(e) => e.stopPropagation()}
