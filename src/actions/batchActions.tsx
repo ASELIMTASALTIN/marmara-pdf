@@ -16,7 +16,23 @@ const OPS: Record<BatchOp, string> = {
 
 const stem = (n: string) => n.replace(/\.pdf$/i, "");
 
-async function processOne(op: BatchOp, f: OpenedFile, opts: Record<string, string>, isCancelled: () => boolean): Promise<{ name: string; bytes: Uint8Array; kind: "pdf" | "export"; note?: string }> {
+/** Page count, or a readable error for damaged files (MuPDF repairs what it can). */
+async function countPages(bytes: Uint8Array): Promise<number> {
+  const { openMupdf } = await import("../core/mupdf/loader");
+  const { doc } = await openMupdf(bytes).catch((e: unknown) => {
+    if (/password/i.test(errorMessage(e))) throw e;
+    throw new Error("The file is damaged or is not a PDF");
+  });
+  try {
+    const n = doc.countPages();
+    if (!n) throw new Error("The file is damaged or has no pages");
+    return n;
+  } finally {
+    doc.destroy();
+  }
+}
+
+async function processOne(op: BatchOp, f: OpenedFile, n: number, opts: Record<string, string>, isCancelled: () => boolean): Promise<{ name: string; bytes: Uint8Array; kind: "pdf" | "export"; note?: string }> {
   switch (op) {
     case "compress": {
       const { compressPdf, COMPRESS_PRESETS } = await import("../core/optimize/compress");
@@ -31,8 +47,6 @@ async function processOne(op: BatchOp, f: OpenedFile, opts: Record<string, strin
     case "numbers":
     case "watermark": {
       const { stampPages } = await import("../core/stamp/stamp");
-      const { PDFDocument } = await import("pdf-lib");
-      const n = (await PDFDocument.load(f.bytes, { ignoreEncryption: true })).getPageCount();
       const pages = Array.from({ length: n }, (_, i) => i);
       const bytes = await stampPages(f.bytes, {
         pages,
@@ -91,7 +105,7 @@ export async function batchDialog() {
         const f = files[i];
         setBusyLabel(`${OPS[op]} — ${i + 1} of ${files.length}: ${f.name}`);
         try {
-          const out = await processOne(op, f, r.values, () => cancelled);
+          const out = await processOne(op, f, await countPages(f.bytes), r.values, () => cancelled);
           await platform.writeInDirectory(dir, out.name, out.bytes, out.kind);
           report.push({ name: f.name, ok: true, note: out.note });
         } catch (e) {

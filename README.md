@@ -3,11 +3,16 @@
 A free, open-source PDF reader and editor for Windows. Everything runs locally:
 documents are never uploaded and nothing is downloaded at runtime.
 
-**Features:** fast virtualized viewer, search (Turkish-aware), page management
-(insert, delete, duplicate, rotate, reorder, extract, merge, split), real text
-and paragraph editing in the PDF content stream, annotations (highlight,
-underline, strikethrough, drawing, shapes, text boxes, notes, signatures,
-images), form filling, OCR for scanned documents (Turkish + English),
+**Features:** fast virtualized viewer with tabs for several documents, search
+(Turkish-aware), printing, page management (insert, delete, duplicate, rotate,
+reorder, extract, merge, split), real text and paragraph editing in the PDF
+content stream, editing of page images and vector graphics, annotations
+(highlight, underline, strikethrough, drawing, shapes, text boxes, notes,
+signatures, images) with XFDF comment exchange, form filling and form
+creation, redaction (search and area, true content removal), OCR for scanned
+documents (Turkish + English), headers/footers, page and Bates numbering,
+watermarks, bookmarks, document comparison, file-size reduction, document
+check (accessibility/archiving) and PDF/A conversion, batch processing,
 conversion (PDF → Word / images / text, images → PDF), certificate-based
 digital signatures with verification, password-protected PDFs, crash recovery. See [FEATURES.md](FEATURES.md) and
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -31,7 +36,7 @@ npm run dev            # UI only, in a normal browser (http://localhost:1420)
 ## Test
 
 ```sh
-npm test                           # unit tests (page ops, search, annotations, text editing, forms)
+npm test                           # unit tests (vitest)
 cd src-tauri && cargo test         # Rust tests (atomic writes, path decoding)
 node scripts/make-fixtures.mjs     # generate test PDFs into test-fixtures/
 ```

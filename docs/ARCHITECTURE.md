@@ -20,10 +20,20 @@ src/
     annotations/      Annotation model, geometry, MuPDF bake/import
     textedit/         Content-stream parser, font decoding, text interpreter, editor
     ocr/              Tesseract wrapper + invisible text-layer writer
-    forms/            AcroForm value writer
+    forms/            AcroForm value writer, field creation/removal
+    convert/          PDF → docx/text, images → PDF
+    signature/        Digital IDs, CMS build/verify, PAdES signing
+    redact/           Redaction (MuPDF Redact annotations + apply)
+    optimize/         Compression, preflight checks/fixes, PDF/A conversion
+    stamp/            Headers/footers, page & Bates numbers, watermarks
+    outline/          Bookmark tree read/write and editing helpers
+    objects/          Page image / vector-graphic hit testing and editing
+    compare/          Word extraction + Myers diff between two documents
     mupdf/            Lazy MuPDF loader, encryption helpers
-  state/              zustand stores: document (bytes, undo/redo), UI, search, dialogs
-  actions/            Orchestration: file, page, annotation, text-edit, OCR, commands
+  state/              zustand stores: document (bytes, undo/redo), UI, search, dialogs;
+                      sessions.ts parks inactive tabs' document state
+  actions/            Orchestration: file, page, annotation, text-edit, OCR, print,
+                      redaction, stamps, compare, batch, comments (XFDF), commands
   components/         React UI (viewer, sidebar, toolbars, dialogs, overlays)
   hooks/              Shortcuts, lifecycle (drop, autosave, close guard), text markup
 ```
@@ -72,6 +82,23 @@ Tesseract (Turkish + English models bundled). Words are written back as an
 invisible (`Tr 3`) text layer aligned with the image, wrapped in
 `/MarmaraOCR BMC … EMC` so a re-run replaces it. The text becomes searchable,
 selectable, copyable and editable with the normal tools.
+
+## Page stamps and object editing
+
+Headers/footers, Bates numbers and watermarks are appended to the page content
+inside marked-content groups (`/MarmaraHF`, `/MarmaraBates`, `/MarmaraWM`), so
+each kind can be re-applied or removed without touching the others or the
+original content. Object editing wraps the chosen image or path operators in
+`q <matrix> cm … Q` (the matrix is conjugated by the current CTM so moves and
+resizes are in displayed space), rewrites their colour operators, swaps the
+image XObject, or removes them.
+
+## Tabs
+
+Only the active document lives in the `useDoc` store. Switching tabs parks
+its full state (bytes, undo stacks, annotations, form values, view position)
+in `state/sessions.ts` and restores the other one, so every tab keeps its own
+history. Closing or quitting checks every tab for unsaved changes.
 
 ## Performance
 
