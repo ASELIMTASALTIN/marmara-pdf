@@ -28,6 +28,10 @@ import {
   Archive,
   EyeOff,
   Wrench,
+  Heading,
+  Droplets,
+  Hash,
+  Eraser,
   FileSignature,
   KeyRound,
   ShieldCheck,
@@ -81,6 +85,11 @@ function openExportMenu(e: React.MouseEvent) {
 function openToolsMenu(e: React.MouseEvent) {
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
   showContextMenu({ clientX: r.left, clientY: r.bottom + 4 }, [
+    { label: "Header, footer & page numbers…", icon: Heading, onSelect: () => runCommand("stamp.headerFooter") },
+    { label: "Watermark…", icon: Droplets, onSelect: () => runCommand("stamp.watermark") },
+    { label: "Bates numbering…", icon: Hash, onSelect: () => runCommand("stamp.bates") },
+    { label: "Remove headers, footers & watermarks", icon: Eraser, onSelect: () => runCommand("stamp.remove") },
+    { kind: "separator" },
     { label: "Reduce file size…", icon: Minimize2, onSelect: () => runCommand("tools.compress") },
     { label: "Document check…", icon: ClipboardCheck, onSelect: () => runCommand("tools.check") },
     { label: "Save as PDF/A…", icon: Archive, onSelect: () => runCommand("tools.pdfa") },
